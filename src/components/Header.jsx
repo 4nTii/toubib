@@ -1,0 +1,176 @@
+import { useState, useRef, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate, Link } from "react-router-dom";
+import { APP_NAME } from "../config/config";
+
+import logo from "../assets/images/app/toubib-logo-w500.webp";
+
+function Header() {
+  const { isAuthenticated, logout, user, fetchUserInfo } = useAuth();
+  const navigate = useNavigate();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const dropdownRef = useRef(null);
+
+  // Get user's first name or fallback
+  const userName = user?.firstName || "Utilisateur";
+  const userInitial = userName.charAt(0).toUpperCase();
+
+  useEffect(() => {
+    // Fetch user info if authenticated but user data is missing
+    const checkUserInfo = async () => {
+      if (isAuthenticated && !user) {
+        const result = await fetchUserInfo();
+        if (!result) {
+          // User info fetch failed, redirect to login
+          logout();
+          navigate("/auth");
+        }
+      }
+    };
+    checkUserInfo();
+  }, [isAuthenticated, user, fetchUserInfo, logout, navigate]);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    logout();
+    setIsDropdownOpen(false);
+    navigate("/auth");
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    // TODO: Implement search functionality
+    console.log("Search:", searchQuery);
+  };
+
+  return (
+    <header className="bg-gray-800 shadow-lg">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+          <Link to="/" className="flex items-center">
+            <img src={logo} alt={APP_NAME} className="h-10 w-auto" />
+          </Link>
+
+          {/* Search Bar */}
+          <form onSubmit={handleSearch} className="flex-1 max-w-lg mx-8">
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Rechercher un médecin, une spécialité..."
+                className="w-full bg-gray-700 text-white placeholder-gray-400 rounded-lg px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <svg
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+          </form>
+
+          {/* Auth Section */}
+          <div className="flex items-center">
+            {isAuthenticated ? (
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="flex items-center gap-3 hover:bg-gray-700 px-3 py-2 rounded-lg transition duration-200"
+                >
+                  {/* Avatar */}
+                  <div
+                    className={`avatar-user-${user?.gender || "male"} w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm`}
+                  ></div>
+                  <span className="text-white">Bonjour {userName}</span>
+                  <svg
+                    className={`h-4 w-4 text-white transition-transform duration-200 ${
+                      isDropdownOpen ? "rotate-180" : ""
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+
+                {isDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-gray-700 rounded-lg shadow-lg py-1 z-50">
+                    <Link
+                      to="/messages"
+                      className="block px-4 py-2 text-gray-200 hover:bg-gray-600 transition duration-200"
+                      onClick={() => setIsDropdownOpen(false)}
+                    >
+                      Mes messages
+                    </Link>
+                    <Link
+                      to="/appointments"
+                      className="block px-4 py-2 text-gray-200 hover:bg-gray-600 transition duration-200"
+                      onClick={() => setIsDropdownOpen(false)}
+                    >
+                      Mes rendez-vous
+                    </Link>
+                    <Link
+                      to="/profile"
+                      className="block px-4 py-2 text-gray-200 hover:bg-gray-600 transition duration-200"
+                      onClick={() => setIsDropdownOpen(false)}
+                    >
+                      Profil
+                    </Link>
+                    <hr className="my-1 border-gray-600" />
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-4 py-2 text-red-400 hover:bg-gray-600 transition duration-200"
+                    >
+                      Déconnexion
+                    </button>
+                    <Link
+                      to="/help"
+                      className="block px-4 py-2 text-gray-200 hover:bg-gray-600 transition duration-200"
+                      onClick={() => setIsDropdownOpen(false)}
+                    >
+                      Aide
+                    </Link>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                to="/auth"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200"
+              >
+                Connexion
+              </Link>
+            )}
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+export default Header;
