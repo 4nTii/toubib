@@ -289,7 +289,7 @@ function Auth() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition duration-200"
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition duration-200 cursor-pointer"
             >
               {isSubmitting ? "Connexion..." : "Se connecter"}
             </button>
@@ -298,14 +298,14 @@ function Auth() {
               <button
                 type="button"
                 onClick={() => switchMode("register")}
-                className="text-blue-400 hover:text-blue-300 text-sm transition duration-200"
+                className="text-blue-400 hover:text-blue-300 text-sm transition duration-200 cursor-pointer"
               >
                 Pas encore de compte ? S'inscrire
               </button>
               <button
                 type="button"
                 onClick={() => switchMode("forgot")}
-                className="text-gray-400 hover:text-gray-300 text-sm transition duration-200"
+                className="text-gray-400 hover:text-gray-300 text-sm transition duration-200 cursor-pointer"
               >
                 Mot de passe oublié ?
               </button>

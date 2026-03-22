@@ -127,6 +127,38 @@ const DateUtils = {
   },
 
   /**
+   * Convert date string to YYYY-MM-DD format for HTML date input
+   * @param {Date|string} inputDate - Date object or date string
+   * @returns {string} Date in YYYY-MM-DD format or empty string if invalid
+   */
+  toInputFormat(inputDate) {
+    if (!inputDate) return "";
+
+    // If already a string, try to parse it
+    if (typeof inputDate === "string") {
+      // Already in YYYY-MM-DD format (exactly 10 chars)
+      if (/^\d{4}-\d{2}-\d{2}$/.test(inputDate)) {
+        return inputDate;
+      }
+
+      // ISO format with time (e.g., "1990-03-15T00:00:00")
+      if (/^\d{4}-\d{2}-\d{2}T/.test(inputDate)) {
+        return inputDate.substring(0, 10);
+      }
+    }
+
+    // Parse and convert to ISO format
+    const date = this.parseDate(inputDate);
+    if (!date || isNaN(date.getTime())) return "";
+
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  },
+
+  /**
    * Format a date as "day fullMonth year" (e.g., "15 mars 2024")
    * @param {Date|string} inputDate - Date object or date string
    * @param {string} [locale="fr-FR"] - Locale code (e.g., "fr-FR", "en-US")

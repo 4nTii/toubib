@@ -1,37 +1,48 @@
 import { API_URL } from "../config/config";
 import DateUtils from "./dateService";
 
-const USER_STORAGE_KEY = "user_info";
+/**
+ * Decode JWT token payload
+ * @param {string} token - JWT token
+ * @returns {object|null} - Decoded payload or null if invalid
+ */
+function decodeToken(token) {
+  try {
+    const payload = token.split(".")[1];
+    const decoded = atob(payload);
+    return JSON.parse(decoded);
+  } catch (e) {
+    return null;
+  }
+}
 
 /**
- * Get user info from localStorage or fetch from API
- * @param {boolean} forceRefresh - Force fetch from API even if cached
- * @returns {Promise<{status: boolean, user: {id, email, phone, firstName, lastName, role}} | null>}
+ * Check if token is expired
+ * @param {string} token - JWT token
+ * @returns {boolean} - True if expired or invalid
  */
-export async function getUserInfo(forceRefresh = false) {
-  // Try to get from localStorage first (unless force refresh)
-  if (!forceRefresh) {
-    const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-    if (storedUser) {
-      try {
-        const user = JSON.parse(storedUser);
-        return { status: true, user };
-      } catch (e) {
-        // Invalid JSON, clear it
-        localStorage.removeItem(USER_STORAGE_KEY);
-      }
-    }
-  }
+export function isTokenExpired(token) {
+  if (!token) return true;
 
-  // Get token for API call
+  const payload = decodeToken(token);
+  if (!payload || !payload.exp) return true;
+
+  // exp is in seconds, Date.now() is in milliseconds
+  return payload.exp * 1000 < Date.now();
+}
+
+/**
+ * Get user info by fetching from API (always fetches, no caching)
+ * @returns {Promise<{status: boolean, user: object} | null>}
+ */
+export async function getUserInfo() {
   const token = localStorage.getItem("token");
-  if (!token) {
+  if (!token || isTokenExpired(token)) {
     return null;
   }
 
-  // Fetch from API
   try {
-    const response = await fetch(`${API_URL}/auth/me`, {
+    const response = await fetch(`${API_URL}/users/me`, {
       method: "GET",
       headers: {
         Accept: "application/json",
@@ -45,7 +56,7 @@ export async function getUserInfo(forceRefresh = false) {
 
     const data = await response.json();
 
-    // Format birthDay to fr-FR (day month year)
+    // Format birthDay to fr-FR (day month year) for display
     const formattedBirthDay = data.data.birthDay
       ? DateUtils.formatDate(data.data.birthDay)
       : null;
@@ -56,40 +67,24 @@ export async function getUserInfo(forceRefresh = false) {
       firstName: data.data.firstName,
       lastName: data.data.lastName,
       birthDay: formattedBirthDay,
+      birthDayRaw: data.data.birthDay || null,
       role: data.data.role,
       gender: data.data.gender,
+      address: data.data.address,
       photo: data.data.photo,
       biography: data.data.biography,
       dateInscription: data.data.dateInscription,
       lastLogin: data.data.lastLogin ? new Date(data.data.lastLogin) : null,
       isActive: data.data.isActive,
+      isEmailVerified: data.data.isEmailVerified,
+      isPhoneVerified: data.data.isPhoneVerified,
     };
-
-    // Store in localStorage
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
 
     return { status: true, user };
   } catch (error) {
     console.error("Failed to fetch user info:", error);
     return null;
   }
-}
-
-/**
- * Clear user info from localStorage
- * @returns {void}
- */
-export function clearUserInfo() {
-  localStorage.removeItem(USER_STORAGE_KEY);
-}
-
-/**
- * Update user info in localStorage
- * @param {object} user - User object to store
- * @returns {void}
- */
-export function updateUserInfo(user) {
-  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
 }
 
 /**
@@ -185,6 +180,49 @@ export async function resetPassword(token, password) {
     return {
       success: false,
       error: "Erreur lors de la réinitialisation du mot de passe",
+    };
+  }
+}
+
+/**
+ * Update user profile
+ * @param {object} fields - Fields to update (firstName, lastName, birthDay, gender, address, email)
+ * @returns {Promise<{success: boolean, message?: string, error?: string}>}
+ */
+export async function updateUserProfile(fields) {
+  const token = localStorage.getItem("token");
+  if (!token || isTokenExpired(token)) {
+    return { success: false, error: "Session expirée" };
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/users/me`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(fields),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      return {
+        success: true,
+        message: data.message || "Profil mis à jour avec succès",
+      };
+    } else {
+      return {
+        success: false,
+        error: data.message || "Erreur lors de la mise à jour",
+      };
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: "Erreur lors de la mise à jour du profil",
     };
   }
 }

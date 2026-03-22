@@ -94,7 +94,7 @@ function Header() {
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="flex items-center gap-3 hover:bg-gray-700 px-3 py-2 rounded-lg transition duration-200"
+                  className="flex items-center gap-3 hover:bg-gray-700 px-3 py-2 rounded-lg transition duration-200 cursor-pointer"
                 >
                   {/* Avatar */}
                   <div
@@ -144,13 +144,13 @@ function Header() {
                     <hr className="my-1 border-gray-600" />
                     <button
                       onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-red-400 hover:bg-gray-600 transition duration-200"
+                      className="block w-full text-left px-4 py-2 text-red-400 hover:bg-gray-600 transition duration-200 cursor-pointer"
                     >
                       Déconnexion
                     </button>
                     <Link
                       to="/help"
-                      className="block px-4 py-2 text-gray-200 hover:bg-gray-600 transition duration-200"
+                      className="block px-4 py-2 text-gray-200 hover:bg-gray-600 transition duration-200 cursor-pointer"
                       onClick={() => setIsDropdownOpen(false)}
                     >
                       Aide
@@ -161,7 +161,7 @@ function Header() {
             ) : (
               <Link
                 to="/auth"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200 cursor-pointer"
               >
                 Connexion
               </Link>

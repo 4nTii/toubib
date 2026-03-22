@@ -6,8 +6,8 @@ import Auth from './pages/auth/Auth';
 import VerifyAccount from './pages/auth/VerifyAccount';
 import ResetPassword from './pages/auth/ResetPassword';
 import Home from './pages/Home';
-import Profile from './pages/Profile';
-import Messages from './pages/Messages';
+import Profile from './pages/user/Profile';
+import Messages from './pages/user/Messages';
 
 function App() {
   return (
