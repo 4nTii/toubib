@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { API_URL } from "../config/config";
-import { getUserInfo, clearUserInfo } from "../services/authService";
+import { getUserInfo, isTokenExpired } from "../services/authService";
 
 const AuthContext = createContext(null);
 
@@ -9,58 +9,58 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // onLoad Verify token
+  // Clear auth state and localStorage
+  const clearAuth = () => {
+    localStorage.removeItem("token");
+    setToken(null);
+    setUser(null);
+  };
+
+  // Check token and fetch user info
+  const checkAuthAndFetchUser = async () => {
+    const storedToken = localStorage.getItem("token");
+
+    if (!storedToken || isTokenExpired(storedToken)) {
+      clearAuth();
+      return false;
+    }
+
+    setToken(storedToken);
+    const result = await getUserInfo();
+
+    if (result && result.status) {
+      setUser(result.user);
+      return true;
+    } else {
+      // API call failed (invalid token), clear auth
+      clearAuth();
+      return false;
+    }
+  };
+
+  // Initial auth check on load
   useEffect(() => {
     const initAuth = async () => {
-      const storedToken = localStorage.getItem("token");
-      if (storedToken) {
-        setToken(storedToken);
-
-        const result = await getUserInfo();
-        if (result && result.status) {
-          setUser(result.user);
-        }
-      }
+      await checkAuthAndFetchUser();
       setIsLoading(false);
     };
-
     initAuth();
   }, []);
 
-  // Storage Listener to verify token
+  // Check token expiration on visibility change (tab focus)
   useEffect(() => {
-    const handleStorageChange = (event) => {
-      if (event.key === "token") {
-        const newToken = localStorage.getItem("token");
-
-        if (!newToken) {
-          setToken(null);
-          setUser(null);
-        } else {
-          setToken(newToken);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        const storedToken = localStorage.getItem("token");
+        if (storedToken && isTokenExpired(storedToken)) {
+          clearAuth();
         }
       }
     };
 
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, []);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const storedToken = localStorage.getItem("token");
-
-      if (!storedToken && token) {
-        setToken(null);
-        setUser(null);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [token]);
 
   const register = async (userData) => {
     try {
@@ -109,8 +109,8 @@ export function AuthProvider({ children }) {
       localStorage.setItem("token", data.token);
       setToken(data.token);
 
-      // Fetch user info from /api/me and store in user_info (force refresh)
-      const userResult = await getUserInfo(true);
+      // Fetch user info from API
+      const userResult = await getUserInfo();
       if (userResult && userResult.status) {
         setUser(userResult.user);
       }
@@ -122,20 +122,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
-    clearUserInfo();
-    setToken(null);
-    setUser(null);
-  };
-
-  // Function to fetch/refresh user info
-  const fetchUserInfo = async () => {
-    const result = await getUserInfo();
-    if (result && result.status) {
-      setUser(result.user);
-      return result;
-    }
-    return null;
+    clearAuth();
   };
 
   const value = {
@@ -146,7 +133,7 @@ export function AuthProvider({ children }) {
     register,
     login,
     logout,
-    fetchUserInfo,
+    fetchUserInfo: checkAuthAndFetchUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

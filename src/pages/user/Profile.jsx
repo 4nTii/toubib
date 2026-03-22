@@ -1,8 +1,22 @@
+import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import Layout from "../../components/Layout";
+import { VerifiedIcon } from "../../components/UiHTML/VerifiedIcon";
+import DateUtils from "../../services/dateService";
+import { updateUserProfile } from "../../services/authService";
 
 function Profile() {
-  const { user } = useAuth();
+  const { user, fetchUserInfo } = useAuth();
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    birthDay: "",
+    gender: "",
+    address: "",
+    email: "",
+  });
 
   // Mock proches (attached accounts) data
   const proches = [
@@ -65,7 +79,63 @@ function Profile() {
       detail: "Rappel vaccin grippe",
     },
   ];
-  console.log(user);
+
+  const handleProfileEditClick = () => {
+    setFormData({
+      firstName: user?.firstName || "",
+      lastName: user?.lastName || "",
+      birthDay: DateUtils.toInputFormat(user?.birthDayRaw),
+      gender: user?.gender || "",
+      address: user?.address || "",
+      email: user?.email || "",
+    });
+    setIsEditing(true);
+  };
+
+  const handleProfileCancelClick = () => {
+    setIsEditing(false);
+  };
+
+  const handleProfileInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleProfileSaveClick = async () => {
+    setIsSaving(true);
+
+    // Build payload with only changed fields
+    const changedFields = {};
+    if (formData.firstName !== user?.firstName)
+      changedFields.firstName = formData.firstName;
+    if (formData.lastName !== user?.lastName)
+      changedFields.lastName = formData.lastName;
+    if (formData.birthDay !== DateUtils.toInputFormat(user?.birthDayRaw))
+      changedFields.birthDay = formData.birthDay;
+    if (formData.gender !== user?.gender)
+      changedFields.gender = formData.gender;
+    if (formData.address !== user?.address)
+      changedFields.address = formData.address;
+    if (formData.email !== user?.email) changedFields.email = formData.email;
+
+    if (Object.keys(changedFields).length === 0) {
+      setIsEditing(false);
+      setIsSaving(false);
+      return;
+    }
+
+    const result = await updateUserProfile(changedFields);
+
+    if (result.success) {
+      await fetchUserInfo();
+      setIsEditing(false);
+    } else {
+      console.error("Failed to update profile:", result.error);
+    }
+
+    setIsSaving(false);
+  };
+
   return (
     <Layout>
       {/* First Row - 3 inline divs */}
@@ -76,35 +146,141 @@ function Profile() {
             <h2 className="text-lg font-semibold text-white">
               Informations personnelles
             </h2>
-            <button className="text-sm text-blue-400 hover:text-blue-300 transition duration-200">
-              Modifier
-            </button>
+            {isEditing ? (
+              <div className="flex gap-2">
+                {!isSaving && (
+                  <button
+                    onClick={handleProfileCancelClick}
+                    className="text-sm text-gray-400 hover:text-gray-300 transition duration-200 cursor-pointer"
+                  >
+                    Annuler
+                  </button>
+                )}
+                <button
+                  onClick={handleProfileSaveClick}
+                  className="text-sm text-green-400 hover:text-green-300 transition duration-200 cursor-pointer"
+                  disabled={isSaving}
+                >
+                  {isSaving ? "..." : "Enregistrer"}
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleProfileEditClick}
+                className="text-sm text-blue-400 hover:text-blue-300 transition duration-200 cursor-pointer"
+              >
+                Modifier
+              </button>
+            )}
           </div>
-          <div className="space-y-1">
-            <div>
-              <span className="text-gray-400 text-xs">Nom complet</span>
-              <p className="text-white text-sm">
-                {user?.firstName} {user?.lastName}
-              </p>
-            </div>
-            <div>
-              <span className="text-gray-400 text-xs">Date de naissance</span>
-              <p className="text-white text-sm">{user?.birthDay}</p>
-            </div>
-            <div>
-              <span className="text-gray-400 text-xs">Adresse</span>
-              <p className="text-white text-sm">{user?.address}</p>
-            </div>
-            <div>
-              <span className="text-gray-400 text-xs">Téléphone</span>
-              <p className="text-white text-sm">
-                {user?.phone || "06 12 34 56 78"}
-              </p>
-            </div>
-            <div>
-              <span className="text-gray-400 text-xs">Email</span>
-              <p className="text-white text-sm">{user?.email}</p>
-            </div>
+          <div className="space-y-2">
+            {isEditing ? (
+              <>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-gray-400 text-xs">Prénom</span>
+                    <input
+                      type="text"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleProfileInputChange}
+                      className="w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <span className="text-gray-400 text-xs">Nom</span>
+                    <input
+                      type="text"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleProfileInputChange}
+                      className="w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <span className="text-gray-400 text-xs">Genre</span>
+                  <select
+                    name="gender"
+                    value={formData.gender}
+                    onChange={handleProfileInputChange}
+                    className="w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  >
+                    <option value="male">Masculin</option>
+                    <option value="female">Féminin</option>
+                  </select>
+                </div>
+                <div>
+                  <span className="text-gray-400 text-xs">
+                    Date de naissance
+                  </span>
+                  <input
+                    type="date"
+                    name="birthDay"
+                    value={formData.birthDay}
+                    onChange={handleProfileInputChange}
+                    className="w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <span className="text-gray-400 text-xs">Adresse</span>
+                  <input
+                    type="text"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleProfileInputChange}
+                    className="w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <span className="text-gray-400 text-xs">Email</span>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleProfileInputChange}
+                    className="w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <span className="text-gray-400 text-xs">Nom complet</span>
+                  <p className="text-white text-sm">
+                    {user?.firstName} {user?.lastName}
+                    <span className="text-xs">
+                      {" "}
+                      ({user?.gender === "male" ? "Masculin" : "Féminin"})
+                    </span>
+                  </p>
+                </div>
+                <div>
+                  <span className="text-gray-400 text-xs">
+                    Date de naissance
+                  </span>
+                  <p className="text-white text-sm">{user?.birthDay}</p>
+                </div>
+                <div>
+                  <span className="text-gray-400 text-xs">Adresse</span>
+                  <p className="text-white text-sm">{user?.address}</p>
+                </div>
+                <div>
+                  <span className="text-gray-400 text-xs">
+                    Téléphone
+                    <VerifiedIcon verified={user?.isPhoneVerified} />
+                  </span>
+                  <p className="text-white text-sm">{user?.phone}</p>
+                </div>
+                <div>
+                  <span className="text-gray-400 text-xs">
+                    Email
+                    <VerifiedIcon verified={user?.isEmailVerified} />
+                  </span>
+                  <p className="text-white text-sm">{user?.email}</p>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -114,7 +290,7 @@ function Profile() {
             <h2 className="text-lg font-semibold text-white">
               Connexion et paiement
             </h2>
-            <button className="text-sm text-blue-400 hover:text-blue-300 transition duration-200">
+            <button className="text-sm text-blue-400 hover:text-blue-300 transition duration-200 cursor-pointer">
               Modifier
             </button>
           </div>
@@ -149,7 +325,7 @@ function Profile() {
         <div className="bg-gray-800 rounded-lg p-4">
           <div className="flex justify-between items-center mb-2">
             <h2 className="text-lg font-semibold text-white">Mes proches</h2>
-            <button className="text-sm text-blue-400 hover:text-blue-300 transition duration-200">
+            <button className="text-sm text-blue-400 hover:text-blue-300 transition duration-200 cursor-pointer">
               Ajouter
             </button>
           </div>
