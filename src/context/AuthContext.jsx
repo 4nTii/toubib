@@ -99,15 +99,19 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
+    // Clear local state first
+    clearAuth();
+
+    // Call backend to invalidate/remove the HttpOnly cookie
     try {
       await fetch(`${API_URL}/auth/logout`, {
         method: "POST",
         credentials: "include",
       });
     } catch (error) {
-      console.error("Logout error:", error);
+      // Even if logout API fails, local state is cleared
+      console.error("Logout API error:", error);
     }
-    clearAuth();
   };
 
   const value = {

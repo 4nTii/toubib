@@ -41,9 +41,9 @@ function Index() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
     setIsDropdownOpen(false);
+    await logout();
     navigate("/auth");
   };
 
