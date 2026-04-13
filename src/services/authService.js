@@ -2,51 +2,16 @@ import { API_URL } from "../config/config";
 import DateUtils from "./dateService";
 
 /**
- * Decode JWT token payload
- * @param {string} token - JWT token
- * @returns {object|null} - Decoded payload or null if invalid
- */
-function decodeToken(token) {
-  try {
-    const payload = token.split(".")[1];
-    const decoded = atob(payload);
-    return JSON.parse(decoded);
-  } catch (e) {
-    return null;
-  }
-}
-
-/**
- * Check if token is expired
- * @param {string} token - JWT token
- * @returns {boolean} - True if expired or invalid
- */
-export function isTokenExpired(token) {
-  if (!token) return true;
-
-  const payload = decodeToken(token);
-  if (!payload || !payload.exp) return true;
-
-  // exp is in seconds, Date.now() is in milliseconds
-  return payload.exp * 1000 < Date.now();
-}
-
-/**
- * Get user info by fetching from API (always fetches, no caching)
+ * Get user info by fetching from API (uses HttpOnly cookie for auth)
  * @returns {Promise<{status: boolean, user: object} | null>}
  */
 export async function getUserInfo() {
-  const token = localStorage.getItem("token");
-  if (!token || isTokenExpired(token)) {
-    return null;
-  }
-
   try {
     const response = await fetch(`${API_URL}/users/me`, {
       method: "GET",
+      credentials: "include",
       headers: {
         Accept: "application/json",
-        Authorization: `Bearer ${token}`,
       },
     });
 
@@ -185,23 +150,18 @@ export async function resetPassword(token, password) {
 }
 
 /**
- * Update user profile
+ * Update user profile (uses HttpOnly cookie for auth)
  * @param {object} fields - Fields to update (firstName, lastName, birthDay, gender, address, email)
  * @returns {Promise<{success: boolean, message?: string, error?: string}>}
  */
 export async function updateUserProfile(fields) {
-  const token = localStorage.getItem("token");
-  if (!token || isTokenExpired(token)) {
-    return { success: false, error: "Session expirée" };
-  }
-
   try {
     const response = await fetch(`${API_URL}/users/me`, {
       method: "PATCH",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
-        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(fields),
     });
@@ -214,6 +174,9 @@ export async function updateUserProfile(fields) {
         message: data.message || "Profil mis à jour avec succès",
       };
     } else {
+      if (response.status === 401) {
+        return { success: false, error: "Session expirée" };
+      }
       return {
         success: false,
         error: data.message || "Erreur lors de la mise à jour",

@@ -1,38 +1,26 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { API_URL } from "../config/config";
-import { getUserInfo, isTokenExpired } from "../services/authService";
+import { getUserInfo } from "../services/authService";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(null);
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Clear auth state and localStorage
+  // Clear auth state
   const clearAuth = () => {
-    localStorage.removeItem("token");
-    setToken(null);
     setUser(null);
   };
 
-  // Check token and fetch user info
+  // Check auth via API (cookie is sent automatically)
   const checkAuthAndFetchUser = async () => {
-    const storedToken = localStorage.getItem("token");
-
-    if (!storedToken || isTokenExpired(storedToken)) {
-      clearAuth();
-      return false;
-    }
-
-    setToken(storedToken);
     const result = await getUserInfo();
 
     if (result && result.status) {
       setUser(result.user);
       return true;
     } else {
-      // API call failed (invalid token), clear auth
       clearAuth();
       return false;
     }
@@ -47,14 +35,11 @@ export function AuthProvider({ children }) {
     initAuth();
   }, []);
 
-  // Check token expiration on visibility change (tab focus)
+  // Re-check auth on visibility change (tab focus)
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        const storedToken = localStorage.getItem("token");
-        if (storedToken && isTokenExpired(storedToken)) {
-          clearAuth();
-        }
+        checkAuthAndFetchUser();
       }
     };
 
@@ -88,6 +73,7 @@ export function AuthProvider({ children }) {
     try {
       const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
+        credentials: "include",
         headers: {
           Accept: "application/json",
           "Content-Type": "application/json",
@@ -100,16 +86,7 @@ export function AuthProvider({ children }) {
         throw new Error(errorData.message || "La connexion a échoué");
       }
 
-      const data = await response.json();
-
-      if (!data.token) {
-        throw new Error(data.message || "La connexion a échoué");
-      }
-
-      localStorage.setItem("token", data.token);
-      setToken(data.token);
-
-      // Fetch user info from API
+      // Fetch user info from API (cookie is now set)
       const userResult = await getUserInfo();
       if (userResult && userResult.status) {
         setUser(userResult.user);
@@ -121,14 +98,21 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await fetch(`${API_URL}/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
     clearAuth();
   };
 
   const value = {
-    token,
     user,
-    isAuthenticated: !!token,
+    isAuthenticated: !!user,
     isLoading,
     register,
     login,
