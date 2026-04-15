@@ -8,9 +8,16 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Clear auth state
-  const clearAuth = () => {
-    setUser(null);
+  // Clear expired cookie via logout API
+  const clearExpiredCookie = async () => {
+    try {
+      await fetch(`${API_URL}/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      // Ignore errors - cookie might already be cleared
+    }
   };
 
   // Check auth via API (cookie is sent automatically)
@@ -21,7 +28,9 @@ export function AuthProvider({ children }) {
       setUser(result.user);
       return true;
     } else {
-      clearAuth();
+      // Clear expired cookie so user can login again
+      await clearExpiredCookie();
+      setUser(null);
       return false;
     }
   };
@@ -44,7 +53,8 @@ export function AuthProvider({ children }) {
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, []);
 
   const register = async (userData) => {
@@ -86,7 +96,6 @@ export function AuthProvider({ children }) {
         throw new Error(errorData.message || "La connexion a échoué");
       }
 
-      // Fetch user info from API (cookie is now set)
       const userResult = await getUserInfo();
       if (userResult && userResult.status) {
         setUser(userResult.user);
@@ -99,19 +108,8 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
-    // Clear local state first
-    clearAuth();
-
-    // Call backend to invalidate/remove the HttpOnly cookie
-    try {
-      await fetch(`${API_URL}/auth/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch (error) {
-      // Even if logout API fails, local state is cleared
-      console.error("Logout API error:", error);
-    }
+    setUser(null);
+    await clearExpiredCookie();
   };
 
   const value = {
