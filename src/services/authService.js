@@ -43,6 +43,7 @@ export async function getUserInfo() {
       isActive: data.data.isActive,
       isEmailVerified: data.data.isEmailVerified,
       isPhoneVerified: data.data.isPhoneVerified,
+      doctor: data.data.doctor || null,
     };
 
     return { status: true, user };
