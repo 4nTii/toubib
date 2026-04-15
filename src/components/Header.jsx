@@ -142,7 +142,7 @@ function Header() {
                       Profil
                     </Link>
                     <hr className="my-1 border-gray-600" />
-                    {user?.doctor && (
+                    {user?.isDoctor && (
                       <>
                         <Link
                           to="/cabinet"
