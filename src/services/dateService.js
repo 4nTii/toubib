@@ -1,4 +1,30 @@
 /**
+ * Days of the week in French
+ */
+export const DAYS_FR = {
+  monday: "Lundi",
+  tuesday: "Mardi",
+  wednesday: "Mercredi",
+  thursday: "Jeudi",
+  friday: "Vendredi",
+  saturday: "Samedi",
+  sunday: "Dimanche",
+};
+
+/**
+ * Days of the week in order (Monday to Sunday)
+ */
+export const DAYS_ORDER = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+];
+
+/**
  * Date utility functions
  */
 const DateUtils = {

@@ -20,30 +20,32 @@ export async function getUserInfo() {
     }
 
     const data = await response.json();
+    const userData = data.data;
 
     // Format birthDay to fr-FR (day month year) for display
-    const formattedBirthDay = data.data.birthDay
-      ? DateUtils.formatDate(data.data.birthDay)
+    const formattedBirthDay = userData.birthDay
+      ? DateUtils.formatDate(userData.birthDay)
       : null;
+
     const user = {
-      id: data.data.id,
-      email: data.data.email,
-      phone: data.data.phone,
-      firstName: data.data.firstName,
-      lastName: data.data.lastName,
+      id: userData.id,
+      email: userData.email,
+      phone: userData.phone,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
       birthDay: formattedBirthDay,
-      birthDayRaw: data.data.birthDay || null,
-      role: data.data.role,
-      gender: data.data.gender,
-      address: data.data.address,
-      photo: data.data.photo,
-      biography: data.data.biography,
-      dateInscription: data.data.dateInscription,
-      lastLogin: data.data.lastLogin ? new Date(data.data.lastLogin) : null,
-      isActive: data.data.isActive,
-      isEmailVerified: data.data.isEmailVerified,
-      isPhoneVerified: data.data.isPhoneVerified,
-      doctor: data.data.doctor || null,
+      birthDayRaw: userData.birthDay || null,
+      role: userData.role,
+      gender: userData.gender,
+      address: userData.address,
+      photo: userData.photo,
+      biography: userData.biography,
+      dateInscription: userData.dateInscription,
+      lastLogin: userData.lastLogin ? new Date(userData.lastLogin) : null,
+      isActive: userData.isActive,
+      isEmailVerified: userData.isEmailVerified,
+      isPhoneVerified: userData.isPhoneVerified,
+      isDoctor: userData.isDoctor || false,
     };
 
     return { status: true, user };
