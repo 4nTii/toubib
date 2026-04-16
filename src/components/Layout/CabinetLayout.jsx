@@ -168,7 +168,7 @@ function CabinetLayout({ children }) {
                   }`}
                 >
                   {item.badge > 0 && (
-                    <span className="absolute -top-1 -left-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    <span className="absolute top-0 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                       {item.badge > 9 ? "9+" : item.badge}
                     </span>
                   )}

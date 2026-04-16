@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import CabinetLayout from "../../../components/CabinetLayout";
+import CabinetLayout from "../../../components/Layout/CabinetLayout";
 import { useDoctor } from "../../../context/DoctorContext";
 
 function ProfilCabinet() {
@@ -93,7 +93,6 @@ function ProfilCabinet() {
 
     setIsSaving(true);
     const result = await updateDoctor(changes, formData.profilePictureFile);
-
     if (result.success) {
       setMessage({ type: "success", text: "Profil mis à jour avec succès" });
       setIsEditing(false);
@@ -155,7 +154,7 @@ function ProfilCabinet() {
             {!isEditing ? (
               <button
                 onClick={() => setIsEditing(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition cursor-pointer"
               >
                 Modifier
               </button>
@@ -163,14 +162,14 @@ function ProfilCabinet() {
               <div className="flex gap-2">
                 <button
                   onClick={handleCancel}
-                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition"
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition cursor-pointer"
                 >
                   Annuler
                 </button>
                 <button
                   onClick={handleSave}
                   disabled={isSaving}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 cursor-pointer"
                 >
                   {isSaving ? "Sauvegarde..." : "Sauvegarder"}
                 </button>

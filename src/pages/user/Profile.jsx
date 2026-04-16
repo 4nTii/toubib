@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import Layout from "../../components/Layout";
+import Layout from "../../components/Layout/Layout";
 import { VerifiedIcon } from "../../components/UiHTML/VerifiedIcon";
 import DateUtils from "../../services/dateService";
 import { updateUserProfile } from "../../services/authService";
