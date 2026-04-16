@@ -1,4 +1,4 @@
-import CabinetLayout from "../../../components/CabinetLayout";
+import CabinetLayout from "../../../components/Layout/CabinetLayout";
 
 function NouveauRendezVous() {
   return (

@@ -1,5 +1,5 @@
 import { useAuth } from "../context/AuthContext";
-import Layout from "../components/Layout";
+import Layout from "../components/Layout/Layout";
 
 function Home() {
   const { user } = useAuth();

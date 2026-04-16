@@ -44,56 +44,55 @@ export async function getDoctorInfo() {
  */
 export async function updateDoctorProfile(fields, photoFile = null) {
   try {
-    let response;
+    const isFormData = photoFile !== null;
 
-    if (photoFile) {
-      // Use FormData for file upload
+    let body;
+    let headers = {
+      Accept: "application/json",
+    };
+
+    if (isFormData) {
       const formData = new FormData();
+
+      // fichier
       formData.append("profilePicture", photoFile);
 
-      // Add other fields as JSON
-      if (Object.keys(fields).length > 0) {
+      // champs JSON
+      if (fields && Object.keys(fields).length > 0) {
         formData.append("data", JSON.stringify(fields));
       }
 
-      response = await fetch(`${API_URL}/doctor/me`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          Accept: "application/json",
-        },
-        body: formData,
-      });
+      body = formData;
+      // ⚠️ NE PAS mettre Content-Type (important)
     } else {
-      // Use JSON for regular updates
-      response = await fetch(`${API_URL}/doctor/me`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(fields),
-      });
+      headers["Content-Type"] = "application/json";
+      body = JSON.stringify(fields || {});
     }
+
+    const response = await fetch(`${API_URL}/doctor/me`, {
+      method: "PATCH",
+      credentials: "include",
+      headers,
+      body,
+    });
 
     const data = await response.json();
 
-    if (response.ok) {
-      return {
-        success: true,
-        message: data.message || "Profil mis à jour avec succès",
-        data: data.data,
-      };
-    } else {
-      if (response.status === 401) {
-        return { success: false, error: "Session expirée" };
-      }
+    if (!response.ok) {
       return {
         success: false,
-        error: data.message || "Erreur lors de la mise à jour",
+        error:
+          response.status === 401
+            ? "Session expirée"
+            : data.message || "Erreur lors de la mise à jour",
       };
     }
+
+    return {
+      success: true,
+      message: data.message || "Profil mis à jour avec succès",
+      data: data.data,
+    };
   } catch (error) {
     return {
       success: false,
