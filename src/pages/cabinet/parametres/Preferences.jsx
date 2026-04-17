@@ -3,6 +3,7 @@ import CabinetLayout from "../../../components/Layout/CabinetLayout";
 import { useDoctor } from "../../../context/DoctorContext";
 import { DAYS_FR, DAYS_ORDER } from "../../../services/dateService";
 import { DURATION_OPTIONS } from "../../../services/doctorService";
+import { MESSAGE_TIMEOUT } from "../../../config/config";
 
 function CabinetCard({ site, onEdit }) {
   const {
@@ -588,7 +589,7 @@ function Preferences() {
     }
 
     setIsSaving(false);
-    setTimeout(() => setMessage({ type: "", text: "" }), 3000);
+    setTimeout(() => setMessage({ type: "", text: "" }), MESSAGE_TIMEOUT);
   };
 
   const handleAddCabinet = () => {
