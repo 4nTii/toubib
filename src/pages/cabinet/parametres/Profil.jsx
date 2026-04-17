@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import CabinetLayout from "../../../components/Layout/CabinetLayout";
 import { useDoctor } from "../../../context/DoctorContext";
+import { MESSAGE_TIMEOUT, FTP_TARGET } from "../../../config/config";
 
 function ProfilCabinet() {
   const { doctor, isLoading, updateDoctor } = useDoctor();
@@ -32,6 +33,8 @@ function ProfilCabinet() {
           name: "",
           description: "",
         },
+        profilePicturePreview: null,
+        profilePictureFile: null,
       };
       setFormData(data);
       setOriginalData(data);
@@ -87,7 +90,7 @@ function ProfilCabinet() {
 
     if (Object.keys(changes).length === 0 && !hasPhotoChange) {
       setMessage({ type: "info", text: "Aucune modification détectée" });
-      setTimeout(() => setMessage({ type: "", text: "" }), 3000);
+      setTimeout(() => setMessage({ type: "", text: "" }), MESSAGE_TIMEOUT);
       return;
     }
 
@@ -111,7 +114,7 @@ function ProfilCabinet() {
     }
 
     setIsSaving(false);
-    setTimeout(() => setMessage({ type: "", text: "" }), 3000);
+    setTimeout(() => setMessage({ type: "", text: "" }), MESSAGE_TIMEOUT);
   };
 
   const handleCancel = () => {
@@ -198,10 +201,11 @@ function ProfilCabinet() {
                 <img
                   src={
                     formData.profilePicturePreview ||
-                    doctor.profilePicture ||
-                    (doctor.user?.gender === "female"
-                      ? "/images/user/avatar-doctor-female.webp"
-                      : "/images/user/avatar-doctor-male.webp")
+                    (doctor.profilePicture
+                      ? `${FTP_TARGET}${doctor.profilePicture}`
+                      : doctor.user?.gender === "female"
+                        ? "/images/user/avatar-doctor-female.webp"
+                        : "/images/user/avatar-doctor-male.webp")
                   }
                   alt="Photo du docteur"
                   className="w-20 h-20 rounded-full object-cover"
