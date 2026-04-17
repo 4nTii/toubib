@@ -1,9 +1,38 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import CabinetLayout from "../../../components/Layout/CabinetLayout";
 import { useDoctor } from "../../../context/DoctorContext";
 import { DAYS_FR, DAYS_ORDER } from "../../../services/dateService";
 import { DURATION_OPTIONS } from "../../../services/doctorService";
+import {
+  getBusinessSite,
+  updateBusinessSite,
+  deleteCollaborator,
+  buildUpdatePayload,
+} from "../../../services/businessSiteService";
 import { MESSAGE_TIMEOUT } from "../../../config/config";
+
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+const REGIONS = [
+  { id: 1, name: "Auvergne-Rhône-Alpes" },
+  { id: 2, name: "Bourgogne-Franche-Comté" },
+  { id: 3, name: "Bretagne" },
+  { id: 4, name: "Centre-Val de Loire" },
+  { id: 5, name: "Corse" },
+  { id: 6, name: "Grand Est" },
+  { id: 7, name: "Hauts-de-France" },
+  { id: 8, name: "Île-de-France" },
+  { id: 9, name: "Normandie" },
+  { id: 10, name: "Nouvelle-Aquitaine" },
+  { id: 11, name: "Occitanie" },
+  { id: 12, name: "Pays de la Loire" },
+  { id: 13, name: "Provence-Alpes-Côte d'Azur" },
+  { id: 14, name: "Guadeloupe" },
+  { id: 15, name: "Martinique" },
+  { id: 16, name: "Guyane" },
+  { id: 17, name: "La Réunion" },
+  { id: 18, name: "Mayotte" },
+];
 
 function CabinetCard({ site, onEdit }) {
   const {
@@ -58,6 +87,10 @@ function CabinetCard({ site, onEdit }) {
       <div className="space-y-2 text-sm">
         <p className="text-gray-300">
           <span className="text-gray-500">Adresse:</span> {businessSite.address}
+        </p>
+        <p className="text-gray-300">
+          <span className="text-gray-500">Région:</span>{" "}
+          {businessSite.region?.name || "Non définie"}
         </p>
         <p className="text-gray-300">
           <span className="text-gray-500">Téléphone:</span> {businessSite.phone}
@@ -122,14 +155,27 @@ function EditCabinetModal({
   site,
   onClose,
   onSave,
+  onDeleteCollaborator,
   isSaving,
   isOwner,
   doctor,
 }) {
+  const getRegionId = () => {
+    if (site.businessSite.region?.id) return site.businessSite.region.id;
+    if (site.businessSite.region?.name) {
+      const found = REGIONS.find(
+        (r) => r.name === site.businessSite.region.name,
+      );
+      return found?.id || null;
+    }
+    return null;
+  };
+
   const [formData, setFormData] = useState({
     name: site.businessSite.name || "",
     address: site.businessSite.address || "",
     ville: site.businessSite.ville || "",
+    regionId: getRegionId(),
     phone: site.businessSite.phone || "",
     email: site.businessSite.email || "",
     consultationDuration: site.consultationDuration || 30,
@@ -141,6 +187,56 @@ function EditCabinetModal({
   const [activeTab, setActiveTab] = useState(
     isOwner ? "cabinet" : "consultation",
   );
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [invitationsList, setInvitationsList] = useState([]);
+  const [doctorsList, setDoctorsList] = useState([]);
+  const [isLoadingDoctors, setIsLoadingDoctors] = useState(true);
+
+  const fetchDoctorsList = async () => {
+    const result = await getBusinessSite(site.businessSite.id);
+    if (result.success && result.data?.doctors) {
+      setDoctorsList(result.data.doctors);
+    }
+    setIsLoadingDoctors(false);
+  };
+
+  useEffect(() => {
+    fetchDoctorsList();
+  }, [site.businessSite.id]);
+
+  const handleDeleteCollaboratorLocal = async (doctorBusinessSiteId) => {
+    const success = await onDeleteCollaborator(
+      doctorBusinessSiteId,
+      site.businessSite.id,
+    );
+    if (success) {
+      await fetchDoctorsList();
+    }
+  };
+
+  const currentDoctorIsOwner = doctorsList.find(
+    (d) => d.doctorId === doctor?.id,
+  )?.isOwner;
+
+  const handleInviteKeyDown = (e) => {
+    if (e.key === "Enter" && isValidEmail(inviteEmail)) {
+      e.preventDefault();
+      handleAddInvitation();
+    }
+  };
+
+  const handleAddInvitation = () => {
+    if (isValidEmail(inviteEmail) && !invitationsList.includes(inviteEmail)) {
+      setInvitationsList((prev) => [...prev, inviteEmail]);
+      setInviteEmail("");
+    }
+  };
+
+  const handleRemoveInvitation = (emailToRemove) => {
+    setInvitationsList((prev) =>
+      prev.filter((email) => email !== emailToRemove),
+    );
+  };
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -151,10 +247,7 @@ function EditCabinetModal({
       ...prev,
       workingSchedule: {
         ...prev.workingSchedule,
-        [day]: {
-          ...prev.workingSchedule[day],
-          [field]: value,
-        },
+        [day]: { ...prev.workingSchedule[day], [field]: value },
       },
     }));
   };
@@ -163,7 +256,6 @@ function EditCabinetModal({
     const businessSiteChanges = {};
     const doctorBusinessSiteChanges = {};
 
-    // Seul le propriétaire peut modifier les infos du cabinet
     if (isOwner) {
       if (formData.name !== originalData.name)
         businessSiteChanges.name = formData.name;
@@ -171,13 +263,14 @@ function EditCabinetModal({
         businessSiteChanges.address = formData.address;
       if (formData.ville !== originalData.ville)
         businessSiteChanges.ville = formData.ville;
+      if (formData.regionId !== originalData.regionId)
+        businessSiteChanges.region = formData.regionId;
       if (formData.phone !== originalData.phone)
         businessSiteChanges.phone = formData.phone;
       if (formData.email !== originalData.email)
         businessSiteChanges.email = formData.email;
     }
 
-    // Tous les docteurs peuvent modifier ces champs
     if (formData.consultationDuration !== originalData.consultationDuration) {
       doctorBusinessSiteChanges.consultationDuration =
         formData.consultationDuration;
@@ -199,26 +292,19 @@ function EditCabinetModal({
     const { businessSiteChanges, doctorBusinessSiteChanges } =
       getChangedFields();
 
-    if (
-      Object.keys(businessSiteChanges).length === 0 &&
-      Object.keys(doctorBusinessSiteChanges).length === 0
-    ) {
+    const payload = buildUpdatePayload(
+      businessSiteChanges,
+      doctorBusinessSiteChanges,
+      site.id,
+      invitationsList,
+    );
+
+    if (!payload) {
       onClose();
       return;
     }
 
-    const payload = {
-      doctorBusinessSite: {
-        id: site.id,
-        ...doctorBusinessSiteChanges,
-      },
-    };
-
-    if (Object.keys(businessSiteChanges).length > 0) {
-      payload.doctorBusinessSite.businessSite = businessSiteChanges;
-    }
-
-    onSave(payload);
+    onSave(payload, site.businessSite.id);
   };
 
   return (
@@ -228,7 +314,7 @@ function EditCabinetModal({
           <h2 className="text-xl font-bold text-white">Modifier le cabinet</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition"
+            className="text-gray-400 hover:text-white transition cursor-pointer"
           >
             <svg
               className="w-6 h-6"
@@ -246,7 +332,6 @@ function EditCabinetModal({
           </button>
         </div>
 
-        {/* Onglets - seulement si propriétaire */}
         {isOwner && (
           <div className="flex gap-2 mb-6">
             <button
@@ -273,7 +358,6 @@ function EditCabinetModal({
         )}
 
         <div className="space-y-6">
-          {/* Onglet Infos cabinet - seulement pour le propriétaire */}
           {isOwner && activeTab === "cabinet" && (
             <div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -307,6 +391,25 @@ function EditCabinetModal({
                   />
                 </div>
                 <div>
+                  <label className="block text-gray-400 mb-2">Région</label>
+                  <select
+                    value={formData.regionId ? String(formData.regionId) : ""}
+                    onChange={(e) =>
+                      handleChange(
+                        "regionId",
+                        e.target.value ? parseInt(e.target.value) : null,
+                      )
+                    }
+                    className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+                  >
+                    {REGIONS.map((region) => (
+                      <option key={region.id} value={String(region.id)}>
+                        {region.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
                   <label className="block text-gray-400 mb-2">Téléphone</label>
                   <input
                     type="tel"
@@ -315,7 +418,7 @@ function EditCabinetModal({
                     className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
                   />
                 </div>
-                <div className="md:col-span-2">
+                <div>
                   <label className="block text-gray-400 mb-2">Email</label>
                   <input
                     type="email"
@@ -326,64 +429,100 @@ function EditCabinetModal({
                 </div>
               </div>
 
-              {/* Section Propriétaires */}
               <hr className="border-gray-700 my-6" />
               <div>
                 <h3 className="text-lg font-semibold text-white mb-4">
-                  Propriétaires
+                  Collaborateurs
                 </h3>
                 <div className="space-y-2">
-                  {/* Docteur connecté si propriétaire */}
-                  {isOwner && doctor && (
-                    <div className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
-                      <span className="text-gray-300">
-                        {doctor.user.firstName} {doctor.user.lastName}
-                        <span className="text-gray-500 text-sm ml-2">
-                          (vous)
-                        </span>
-                      </span>
-                      <button
-                        type="button"
-                        className="text-red-400 hover:text-red-300 transition cursor-pointer"
-                        onClick={() => {
-                          // TODO: Implémenter la suppression du privilège
-                          alert("Fonctionnalité à venir");
-                        }}
-                      >
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
+                  {isLoadingDoctors ? (
+                    <div className="text-gray-400 text-center py-4">
+                      Chargement des collaborateurs...
                     </div>
+                  ) : (
+                    doctorsList.map((doctorItem) => {
+                      const isCurrentDoctor =
+                        doctorItem.doctorId === doctor?.id;
+                      const doctorItemIsOwner = doctorItem.isOwner;
+                      const canDelete =
+                        currentDoctorIsOwner &&
+                        !isCurrentDoctor &&
+                        !doctorItemIsOwner;
+
+                      return (
+                        <div
+                          key={doctorItem.doctorId}
+                          className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-gray-300">
+                              {doctorItem.firstName} {doctorItem.lastName}
+                              {isCurrentDoctor && (
+                                <span className="text-gray-500 text-sm ml-2">
+                                  (vous)
+                                </span>
+                              )}
+                            </span>
+                            {doctorItemIsOwner && (
+                              <span className="px-2 py-0.5 bg-green-600/20 text-green-400 text-xs rounded font-medium">
+                                Owner
+                              </span>
+                            )}
+                          </div>
+                          {canDelete && (
+                            <button
+                              type="button"
+                              className="text-red-400 hover:text-red-300 transition cursor-pointer"
+                              onClick={() => {
+                                if (
+                                  confirm(
+                                    `Supprimer ${doctorItem.firstName} ${doctorItem.lastName} du cabinet ?`,
+                                  )
+                                ) {
+                                  handleDeleteCollaboratorLocal(
+                                    doctorItem.doctorBusinessSiteId,
+                                  );
+                                }
+                              }}
+                            >
+                              <svg
+                                className="w-5 h-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M6 18L18 6M6 6l12 12"
+                                />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })
                   )}
-                  {/* Autres propriétaires depuis l'API */}
-                  {(site.businessSite.owners || [])
-                    .filter((owner) => owner.id !== doctor?.id)
-                    .map((owner, index) => (
+                </div>
+
+                {invitationsList.length > 0 && (
+                  <div className="space-y-2 mt-3">
+                    {invitationsList.map((email) => (
                       <div
-                        key={index}
-                        className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg"
+                        key={email}
+                        className="flex items-center justify-between p-3 bg-yellow-600/10 rounded-lg border border-yellow-600/30"
                       >
-                        <span className="text-gray-300">
-                          {owner.firstName} {owner.lastName}
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="text-gray-300">{email}</span>
+                          <span className="text-yellow-500 text-xs">
+                            Invitation...
+                          </span>
+                        </div>
                         <button
                           type="button"
                           className="text-red-400 hover:text-red-300 transition cursor-pointer"
-                          onClick={() => {
-                            // TODO: Implémenter la suppression du privilège
-                            alert("Fonctionnalité à venir");
-                          }}
+                          onClick={() => handleRemoveInvitation(email)}
                         >
                           <svg
                             className="w-5 h-5"
@@ -401,22 +540,27 @@ function EditCabinetModal({
                         </button>
                       </div>
                     ))}
-                </div>
+                  </div>
+                )}
 
-                {/* Ajouter un propriétaire */}
                 <div className="flex items-center gap-2 p-1 mt-3 bg-gray-700/30 rounded-lg border border-dashed border-gray-600">
                   <input
-                    type="text"
-                    placeholder="Ajouter un docteur"
-                    className="flex-1 px-3 bg-transparent text-white placeholder-gray-500 focus:outline-none"
+                    type="email"
+                    placeholder="Email du docteur à inviter"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    onKeyDown={handleInviteKeyDown}
+                    className="flex-1 px-3 py-2 bg-transparent text-white placeholder-gray-500 focus:outline-none"
                   />
                   <button
                     type="button"
-                    className="text-blue-400 hover:text-blue-300 transition cursor-pointer"
-                    onClick={() => {
-                      // TODO: Implémenter l'ajout d'un propriétaire
-                      alert("Fonctionnalité à venir");
-                    }}
+                    disabled={!isValidEmail(inviteEmail)}
+                    className={`p-2 transition cursor-pointer ${
+                      isValidEmail(inviteEmail)
+                        ? "text-blue-400 hover:text-blue-300"
+                        : "text-gray-600 cursor-not-allowed"
+                    }`}
+                    onClick={handleAddInvitation}
                   >
                     <svg
                       className="w-5 h-5"
@@ -433,14 +577,23 @@ function EditCabinetModal({
                     </svg>
                   </button>
                 </div>
+
+                <span className="text-gray-500 text-xs m-1 text-center">
+                  <p>
+                    L'attribution ou le retrait du badge Owner se fait
+                    uniquement via une demande au support technique Toubib.
+                  </p>
+                  <p>
+                    Appelez la hotline
+                    <a href="tel:+33000000000"> +33 0 00 00 00 00</a>.
+                  </p>
+                </span>
               </div>
             </div>
           )}
 
-          {/* Onglet Paramètres de consultation */}
           {(!isOwner || activeTab === "consultation") && (
             <>
-              {/* Consultation */}
               <div>
                 <h3 className="text-lg font-semibold text-white mb-4">
                   Paramètres de consultation
@@ -491,7 +644,6 @@ function EditCabinetModal({
                 </div>
               </div>
 
-              {/* Horaires */}
               <div>
                 <h3 className="text-lg font-semibold text-white mb-4">
                   Horaires de travail
@@ -554,14 +706,14 @@ function EditCabinetModal({
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition"
+            className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition cursor-pointer"
           >
             Annuler
           </button>
           <button
             onClick={handleSubmit}
             disabled={isSaving}
-            className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 cursor-pointer"
           >
             {isSaving ? "Sauvegarde..." : "Sauvegarder"}
           </button>
@@ -572,28 +724,55 @@ function EditCabinetModal({
 }
 
 function Preferences() {
-  const { doctor, isLoading, updateDoctor } = useDoctor();
+  const { doctor, isLoading, fetchDoctorInfo } = useDoctor();
   const [editingSite, setEditingSite] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
-  const handleSave = async (payload) => {
-    setIsSaving(true);
-    const result = await updateDoctor(payload);
-
-    if (result.success) {
-      setMessage({ type: "success", text: "Cabinet mis à jour avec succès" });
-      setEditingSite(null);
-    } else {
-      setMessage({ type: "error", text: result.error });
-    }
-
-    setIsSaving(false);
+  const showMessage = (type, text) => {
+    setMessage({ type, text });
     setTimeout(() => setMessage({ type: "", text: "" }), MESSAGE_TIMEOUT);
   };
 
+  const handleSave = async (payload, businessSiteId) => {
+    setIsSaving(true);
+
+    const result = await updateBusinessSite(businessSiteId, payload);
+
+    if (result.success) {
+      showMessage("success", result.message);
+      setEditingSite(null);
+      await fetchDoctorInfo();
+    } else {
+      showMessage("error", result.error);
+    }
+
+    setIsSaving(false);
+  };
+
+  const handleDeleteCollaborator = async (
+    doctorBusinessSiteId,
+    businessSiteId,
+  ) => {
+    setIsSaving(true);
+
+    const result = await deleteCollaborator(
+      businessSiteId,
+      doctorBusinessSiteId,
+    );
+
+    if (result.success) {
+      showMessage("success", result.message);
+      await fetchDoctorInfo();
+    } else {
+      showMessage("error", result.error);
+    }
+
+    setIsSaving(false);
+    return result.success;
+  };
+
   const handleAddCabinet = () => {
-    // TODO: Implémenter l'ajout de cabinet
     alert("Fonctionnalité à venir");
   };
 
@@ -654,6 +833,7 @@ function Preferences() {
           site={editingSite}
           onClose={() => setEditingSite(null)}
           onSave={handleSave}
+          onDeleteCollaborator={handleDeleteCollaborator}
           isSaving={isSaving}
           isOwner={editingSite.isOwner}
           doctor={doctor}
