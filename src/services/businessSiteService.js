@@ -1,6 +1,42 @@
 import { API_URL } from "../config/config";
 
 /**
+ * Create a new business site
+ * @param {object} payload - Business site data
+ * @returns {Promise<{success: boolean, message?: string, data?: object, error?: string}>}
+ */
+export async function createBusinessSite(payload) {
+  try {
+    const response = await fetch(`${API_URL}/businesssites`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data.message || "Erreur lors de la création du cabinet",
+      };
+    }
+
+    return {
+      success: true,
+      message: data.message || "Cabinet créé avec succès",
+      data: data.data,
+    };
+  } catch (error) {
+    return { success: false, error: "Erreur de connexion" };
+  }
+}
+
+/**
  * Get business site details with doctors list
  * @param {number} businessSiteId
  * @returns {Promise<{success: boolean, data?: object, error?: string}>}
