@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { APP_NAME } from "../config/config";
 import CGUBanner from "../components/CGUBanner";
+import SearchBar from "../components/SearchBar";
 
 import logo from "../assets/images/app/toubib-logo-w500.webp";
 
@@ -147,6 +148,10 @@ function Index() {
             Votre plateforme de santé de confiance pour gérer vos rendez-vous et
             entrer en contact avec des professionnels médicaux.
           </p>
+
+          <div className="mb-10">
+            <SearchBar variant="index" />
+          </div>
 
           <div className="flex justify-center gap-4">
             {isAuthenticated ? (
