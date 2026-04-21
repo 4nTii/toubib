@@ -115,18 +115,6 @@ function Header() {
                       Profil
                     </Link>
                     <hr className="my-1 border-gray-600" />
-                    {user?.isDoctor && (
-                      <>
-                        <Link
-                          to="/cabinet"
-                          className="block px-4 py-2 text-gray-200 hover:bg-gray-600 transition duration-200"
-                          onClick={() => setIsDropdownOpen(false)}
-                        >
-                          Mon cabinet
-                        </Link>
-                        <hr className="my-1 border-gray-600" />
-                      </>
-                    )}
                     <button
                       onClick={handleLogout}
                       className="block w-full text-left px-4 py-2 text-red-400 hover:bg-gray-600 transition duration-200 cursor-pointer"
