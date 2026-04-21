@@ -25,7 +25,11 @@ function SearchBar({ variant = "header" }) {
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState({ doctors: [], businessSite: [], specialities: [] });
+  const [searchResults, setSearchResults] = useState({
+    doctors: [],
+    businessSite: [],
+    specialities: [],
+  });
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isLoadingSearch, setIsLoadingSearch] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -58,8 +62,6 @@ function SearchBar({ variant = "header" }) {
   }, []);
 
   // Helpers
-  const createSlug = (text) => text.toLowerCase().replace(/\s+/g, "-");
-
   const getDoctorImageUrl = (imagePath, gender) => {
     if (imagePath) return `${FTP_TARGET}/${imagePath}`;
     return DEFAULT_AVATARS[gender] || DEFAULT_AVATARS.male;
@@ -67,7 +69,11 @@ function SearchBar({ variant = "header" }) {
 
   const hasResults = () => {
     const { doctors, businessSite, specialities } = searchResults;
-    return doctors?.length > 0 || businessSite?.length > 0 || specialities?.length > 0;
+    return (
+      doctors?.length > 0 ||
+      businessSite?.length > 0 ||
+      specialities?.length > 0
+    );
   };
 
   const hasLocationResults = () => {
@@ -115,7 +121,10 @@ function SearchBar({ variant = "header" }) {
       return;
     }
 
-    searchTimeoutRef.current = setTimeout(() => fetchSearchResults(value), DEBOUNCE_DELAY);
+    searchTimeoutRef.current = setTimeout(
+      () => fetchSearchResults(value),
+      DEBOUNCE_DELAY,
+    );
   };
 
   const handleLocationChange = (e) => {
@@ -132,26 +141,38 @@ function SearchBar({ variant = "header" }) {
       return;
     }
 
-    locationTimeoutRef.current = setTimeout(() => fetchLocationResults(value), DEBOUNCE_DELAY);
+    locationTimeoutRef.current = setTimeout(
+      () => fetchLocationResults(value),
+      DEBOUNCE_DELAY,
+    );
   };
 
   const handleDoctorSelect = (doctor) => {
-    navigate(`/doctor/${doctor.id}/${createSlug(doctor.name)}`);
+    const slug = encodeURIComponent(
+      doctor.name.toLowerCase().replace(/\s+/g, "-"),
+    );
+    navigate(`/api/doctor/${doctor.id}/${slug}`);
     closeSearchDropdown();
   };
 
   const handleBusinessSiteSelect = (site) => {
-    navigate(`/business-site/${site.id}/${createSlug(site.name)}`);
+    const slug = encodeURIComponent(
+      site.name.toLowerCase().replace(/\s+/g, "-"),
+    );
+    navigate(`/api/businesssite/${site.id}/${slug}`);
     closeSearchDropdown();
   };
 
   const handleSpecialitySelect = (speciality) => {
-    navigate(`/speciality/${speciality.id}/${createSlug(speciality.name)}`);
+    const slug = encodeURIComponent(
+      speciality.name.toLowerCase().replace(/\s+/g, "-"),
+    );
+    navigate(`/api/specialty/${speciality.id}/${slug}`);
     closeSearchDropdown();
   };
 
   const handleRegionSelect = (region) => {
-    navigate(`/region/${region.id}/${createSlug(region.name)}`);
+    setLocationQuery(region.name);
     closeLocationDropdown();
   };
 
@@ -185,7 +206,7 @@ function SearchBar({ variant = "header" }) {
       onClick={() => handleDoctorSelect(doctor)}
       className="w-full text-left px-3 py-2 text-white hover:bg-gray-600 transition cursor-pointer flex items-center gap-2"
     >
-      <div className="w-9 h-9 rounded-full bg-gray-600 flex-shrink-0 overflow-hidden">
+      <div className="w-9 h-9 rounded-full bg-gray-600 shrink-0 overflow-hidden">
         <img
           src={getDoctorImageUrl(doctor.image, doctor.gender)}
           alt={doctor.name}
@@ -212,7 +233,7 @@ function SearchBar({ variant = "header" }) {
       onClick={() => handleBusinessSiteSelect(site)}
       className="w-full text-left px-3 py-2 text-white hover:bg-gray-600 transition cursor-pointer flex items-center gap-2"
     >
-      <div className="w-9 h-9 rounded-lg bg-green-600/20 flex-shrink-0 flex items-center justify-center">
+      <div className="w-9 h-9 rounded-lg bg-green-600/20 shrink-0 flex items-center justify-center">
         <BuildingIcon />
       </div>
       <div className="flex-1 min-w-0">
@@ -229,7 +250,7 @@ function SearchBar({ variant = "header" }) {
       onClick={() => handleSpecialitySelect(speciality)}
       className="w-full text-left px-3 py-2 text-white hover:bg-gray-600 transition cursor-pointer flex items-center gap-2"
     >
-      <div className="w-9 h-9 rounded-lg bg-purple-600/20 flex-shrink-0 flex items-center justify-center">
+      <div className="w-9 h-9 rounded-lg bg-purple-600/20 shrink-0 flex items-center justify-center">
         <MedicalIcon />
       </div>
       <div className="flex-1 min-w-0">
@@ -244,11 +265,7 @@ function SearchBar({ variant = "header" }) {
     const sections = [];
 
     if (doctors?.length > 0) {
-      sections.push(
-        <div key="doctors">
-          {doctors.map(renderDoctorItem)}
-        </div>
-      );
+      sections.push(<div key="doctors">{doctors.map(renderDoctorItem)}</div>);
     }
 
     if (businessSite?.length > 0) {
@@ -256,7 +273,7 @@ function SearchBar({ variant = "header" }) {
         <div key="businessSite">
           {sections.length > 0 && <div className="border-t border-gray-600" />}
           {businessSite.map(renderBusinessSiteItem)}
-        </div>
+        </div>,
       );
     }
 
@@ -265,7 +282,7 @@ function SearchBar({ variant = "header" }) {
         <div key="specialities">
           {sections.length > 0 && <div className="border-t border-gray-600" />}
           {specialities.map(renderSpecialityItem)}
-        </div>
+        </div>,
       );
     }
 
@@ -279,7 +296,7 @@ function SearchBar({ variant = "header" }) {
       onClick={() => handleRegionSelect(region)}
       className="w-full text-left px-3 py-2 text-white hover:bg-gray-600 transition cursor-pointer flex items-center gap-2"
     >
-      <div className="w-9 h-9 rounded-lg bg-orange-600/20 flex-shrink-0 flex items-center justify-center">
+      <div className="w-9 h-9 rounded-lg bg-orange-600/20 shrink-0 flex items-center justify-center">
         <RegionIcon />
       </div>
       <div className="flex-1 min-w-0">
@@ -294,11 +311,7 @@ function SearchBar({ variant = "header" }) {
     const sections = [];
 
     if (region?.length > 0) {
-      sections.push(
-        <div key="region">
-          {region.map(renderRegionItem)}
-        </div>
-      );
+      sections.push(<div key="region">{region.map(renderRegionItem)}</div>);
     }
 
     return sections;
@@ -324,9 +337,13 @@ function SearchBar({ variant = "header" }) {
         {isSearchFocused && (hasSearched || isLoadingSearch) && (
           <div className="absolute top-full left-0 right-0 mt-1 bg-gray-700 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
             {isLoadingSearch ? (
-              <div className="px-4 py-3 text-gray-400 text-sm">Recherche...</div>
+              <div className="px-4 py-3 text-gray-400 text-sm">
+                Recherche...
+              </div>
             ) : !hasResults() ? (
-              <div className="px-4 py-3 text-gray-400 text-sm">Aucun résultat trouvé</div>
+              <div className="px-4 py-3 text-gray-400 text-sm">
+                Aucun résultat trouvé
+              </div>
             ) : (
               renderSearchResults()
             )}
@@ -335,7 +352,10 @@ function SearchBar({ variant = "header" }) {
       </div>
 
       {/* Location Field */}
-      <div className={`relative ${isCompact ? "w-36" : "w-48"}`} ref={locationRef}>
+      <div
+        className={`relative ${isCompact ? "w-58" : "w-66"}`}
+        ref={locationRef}
+      >
         <input
           type="text"
           value={locationQuery}
@@ -349,9 +369,13 @@ function SearchBar({ variant = "header" }) {
         {isLocationFocused && (hasSearchedLocation || isLoadingLocation) && (
           <div className="absolute top-full left-0 right-0 mt-1 bg-gray-700 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
             {isLoadingLocation ? (
-              <div className="px-4 py-3 text-gray-400 text-sm">Recherche...</div>
+              <div className="px-4 py-3 text-gray-400 text-sm">
+                Recherche...
+              </div>
             ) : !hasLocationResults() ? (
-              <div className="px-4 py-3 text-gray-400 text-sm">Aucun résultat trouvé</div>
+              <div className="px-4 py-3 text-gray-400 text-sm">
+                Aucun résultat trouvé
+              </div>
             ) : (
               renderLocationResults()
             )}
@@ -362,7 +386,7 @@ function SearchBar({ variant = "header" }) {
       {/* Search Button */}
       <button
         type="submit"
-        className={`bg-blue-600 hover:bg-blue-700 text-white font-medium transition cursor-pointer flex items-center justify-center gap-2 rounded-r-lg ${isCompact ? "px-4 py-2 text-sm" : "px-6 py-3"}`}
+        className={`bg-green-600 hover:bg-green-800 text-white font-medium transition cursor-pointer flex items-center justify-center gap-2 rounded-r-lg ${isCompact ? "px-4 py-2 text-sm" : "px-6 py-3"}`}
       >
         <svg
           className={isCompact ? "h-4 w-4" : "h-5 w-5"}

@@ -45,7 +45,6 @@ export async function getUserInfo() {
       isActive: userData.isActive,
       isEmailVerified: userData.isEmailVerified,
       isPhoneVerified: userData.isPhoneVerified,
-      isDoctor: userData.isDoctor || false,
     };
 
     return { status: true, user };
