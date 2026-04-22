@@ -215,3 +215,44 @@ const DateUtils = {
 
 // Export as default
 export default DateUtils;
+
+/**
+ * Parses a workingSchedule object into a normalized array ordered Monday → Sunday.
+ *
+ * @param {Object} schedule - workingSchedule from the API
+ *   e.g. { monday: { start, end, enabled }, tuesday: { ... }, ... }
+ * @returns {Array<{ dayName: string, start: string, end: string, status: "ouvert"|"fermé" }>}
+ *   Every day of the week is included regardless of its enabled state.
+ */
+export function parseWorkingSchedule(schedule) {
+  if (!schedule || typeof schedule !== "object") return [];
+
+  return DAYS_ORDER.map((key) => {
+    const day = schedule[key];
+    const enabled = day?.enabled === true;
+    return {
+      dayName: DAYS_FR[key],
+      start: day?.start ?? null,
+      end: day?.end ?? null,
+      status: enabled ? "ouvert" : "fermé",
+    };
+  });
+}
+
+/**
+ * Formats a duration in minutes to a human-readable string.
+ * < 60  → "Xmin"
+ * >= 60 → "Xh" (with remainder if not exact, e.g. "1h30")
+ *
+ * @param {number|null|undefined} minutes
+ * @returns {string} Formatted duration or "Non renseigné"
+ */
+export function formatDuration(minutes) {
+  if (minutes === null || minutes === undefined || minutes === "") return "Non renseigné";
+  const m = Number(minutes);
+  if (isNaN(m) || m < 0) return "Non renseigné";
+  if (m < 60) return `${m}min`;
+  const h = Math.floor(m / 60);
+  const rem = m % 60;
+  return rem === 0 ? `${h}h` : `${h}h${rem}`;
+}
