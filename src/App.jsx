@@ -8,6 +8,7 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import Home from "./pages/Home";
 import Profile from "./pages/user/Profile";
 import Messages from "./pages/user/Messages";
+import Doctor from "./pages/doctor/Doctor";
 
 function App() {
   return (
@@ -41,6 +42,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/doctor/:id/:name" element={<Doctor />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
