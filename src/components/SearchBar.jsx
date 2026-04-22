@@ -151,7 +151,7 @@ function SearchBar({ variant = "header" }) {
     const slug = encodeURIComponent(
       doctor.name.toLowerCase().replace(/\s+/g, "-"),
     );
-    navigate(`/api/doctor/${doctor.id}/${slug}`);
+    navigate(`/doctor/${doctor.id}/${slug}`);
     closeSearchDropdown();
   };
 
@@ -159,7 +159,7 @@ function SearchBar({ variant = "header" }) {
     const slug = encodeURIComponent(
       site.name.toLowerCase().replace(/\s+/g, "-"),
     );
-    navigate(`/api/businesssite/${site.id}/${slug}`);
+    navigate(`/businesssite/${site.id}/${slug}`);
     closeSearchDropdown();
   };
 
@@ -167,7 +167,7 @@ function SearchBar({ variant = "header" }) {
     const slug = encodeURIComponent(
       speciality.name.toLowerCase().replace(/\s+/g, "-"),
     );
-    navigate(`/api/specialty/${speciality.id}/${slug}`);
+    navigate(`/specialty/${speciality.id}/${slug}`);
     closeSearchDropdown();
   };
 
