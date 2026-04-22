@@ -16,7 +16,7 @@ export function AuthProvider({ children }) {
         credentials: "include",
       });
     } catch (error) {
-      // Ignore errors - cookie might already be cleared
+      // ne rien faire car peut etre déja nettoyé
     }
   };
 
@@ -28,7 +28,6 @@ export function AuthProvider({ children }) {
       setUser(result.user);
       return true;
     } else {
-      // Clear expired cookie so user can login again
       await clearExpiredCookie();
       setUser(null);
       return false;
