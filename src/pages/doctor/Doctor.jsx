@@ -3,13 +3,18 @@ import { useParams } from "react-router-dom";
 import Layout from "../../components/Layout/Layout";
 import GoogleMaps from "../../components/UiHTML/GoogleMaps";
 import { getDoctorById } from "../../services/doctorService";
-import { parseWorkingSchedule, formatDuration } from "../../services/dateService";
+import {
+  parseWorkingSchedule,
+  formatDuration,
+  formatSlotDate,
+} from "../../services/dateService";
 import { formatFee } from "../../services/mathService";
 import { FTP_TARGET } from "../../config/config";
 
 function Doctor() {
   const { id } = useParams();
   const [doctor, setDoctor] = useState(null);
+  const [availableSlot, setAvailableSlot] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -18,7 +23,8 @@ function Doctor() {
       setLoading(true);
       const result = await getDoctorById(id);
       if (result.success) {
-        setDoctor(result.data);
+        setDoctor(result.data.doctor);
+        setAvailableSlot(result.data.availableSlot ?? {});
       } else {
         setError(result.error);
       }
@@ -26,6 +32,19 @@ function Doctor() {
     }
     fetchDoctor();
   }, [id]);
+
+  /**
+   * Returns the first 3 dates (with up to 3 slots each) from availableSlot.
+   * Returns null if there are no slots at all.
+   */
+  const getNextAvailabilities = () => {
+    const dates = Object.keys(availableSlot).sort();
+    if (dates.length === 0) return null;
+    return dates.slice(0, 3).map((dateKey) => ({
+      label: formatSlotDate(dateKey),
+      slots: (availableSlot[dateKey] ?? []).slice(0, 5),
+    }));
+  };
 
   const getProfileImage = () => {
     if (doctor?.profilePicture) {
@@ -412,9 +431,42 @@ function Doctor() {
               <h2 className="text-base font-semibold text-white mb-3">
                 Prochaine disponibilité
               </h2>
-              <p className="text-gray-500 text-sm italic">
-                Informations disponibles prochainement.
-              </p>
+              {(() => {
+                const availabilities = getNextAvailabilities();
+                if (!availabilities) {
+                  return (
+                    <>
+                      <p className="text-gray-500 text-sm italic">
+                        Aucune disponibilité pour l'instant.
+                      </p>
+                      <p className="text-gray-500 text-sm italic">
+                        Pour plus d'informations, contactez le docteur.
+                      </p>
+                    </>
+                  );
+                }
+                return (
+                  <div className="space-y-3">
+                    {availabilities.map(({ label, slots }) => (
+                      <div key={label}>
+                        <p className="text-gray-400 text-xs font-medium uppercase tracking-wider mb-1">
+                          {`- ${label}`}
+                        </p>
+                        <div className="flex flex-wrap gap-2 justify-center">
+                          {slots.map((slot) => (
+                            <span
+                              key={slot.start}
+                              className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium px-2.5 py-1 rounded-sm cursor-pointer transition"
+                            >
+                              {slot.start}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </section>
 
             <section className="bg-gray-800 rounded-xl p-5">
