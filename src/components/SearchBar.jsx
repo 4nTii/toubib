@@ -330,7 +330,7 @@ function SearchBar({ variant = "header" }) {
           onChange={handleSearchChange}
           onFocus={() => setIsSearchFocused(true)}
           placeholder="Nom, spécialité, établissement"
-          className={`w-full bg-gray-700 text-white placeholder-gray-400 px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:z-10 rounded-l-lg border-r border-gray-600 ${isCompact ? "text-sm" : "py-3"}`}
+          className={`w-full bg-gray-700 text-white placeholder-gray-400 px-4 py-2 pl-10 focus:outline-none focus:z-10 rounded-l-lg border-r border-gray-600 ${isCompact ? "text-sm" : "py-3"}`}
         />
         <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2" />
 
@@ -362,7 +362,7 @@ function SearchBar({ variant = "header" }) {
           onChange={handleLocationChange}
           onFocus={() => setIsLocationFocused(true)}
           placeholder="Où ?"
-          className={`w-full bg-gray-700 text-white placeholder-gray-400 px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:z-10 rounded-none border-r border-gray-600 ${isCompact ? "text-sm" : "py-3"}`}
+          className={`w-full bg-gray-700 text-white placeholder-gray-400 px-4 py-2 pl-10 focus:outline-none focus:z-10 rounded-none border-r border-gray-600 ${isCompact ? "text-sm" : "py-3"}`}
         />
         <LocationPinIcon className="absolute left-3 top-1/2 transform -translate-y-1/2" />
 

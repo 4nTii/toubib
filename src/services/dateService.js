@@ -240,6 +240,27 @@ export function parseWorkingSchedule(schedule) {
 }
 
 /**
+ * Format an available-slot date key (YYYY-MM-DD) to a French label.
+ * e.g. "2026-04-23" → "Jeudi 23 Avril"
+ *
+ * @param {string} dateKey - Date in YYYY-MM-DD format
+ * @returns {string} Formatted date label or empty string if invalid
+ */
+export function formatSlotDate(dateKey) {
+  if (!dateKey || !/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return "";
+  // Build date at noon to avoid timezone-offset midnight issues
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const date = new Date(year, month - 1, day, 12, 0, 0);
+  if (isNaN(date.getTime())) return "";
+  const dayName = date.toLocaleDateString("fr-FR", { weekday: "long" });
+  const monthName = date.toLocaleDateString("fr-FR", { month: "long" });
+  const dayNum = date.getDate();
+  // Capitalise first letter of each word
+  const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+  return `${cap(dayName)} ${dayNum} ${cap(monthName)}`;
+}
+
+/**
  * Formats a duration in minutes to a human-readable string.
  * < 60  → "Xmin"
  * >= 60 → "Xh" (with remainder if not exact, e.g. "1h30")

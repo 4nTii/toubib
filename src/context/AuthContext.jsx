@@ -7,6 +7,7 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
 
   // Clear expired cookie via logout API
   const clearExpiredCookie = async () => {
@@ -21,15 +22,20 @@ export function AuthProvider({ children }) {
   };
 
   // Check auth via API (cookie is sent automatically)
-  const checkAuthAndFetchUser = async () => {
+  // Skips the call if authChecked is already true (user confirmed authenticated)
+  const checkAuthAndFetchUser = async ({ force = false } = {}) => {
+    if (authChecked && !force) return true;
+
     const result = await getUserInfo();
 
     if (result && result.status) {
       setUser(result.user);
+      setAuthChecked(true);
       return true;
     } else {
       await clearExpiredCookie();
       setUser(null);
+      setAuthChecked(false);
       return false;
     }
   };
@@ -37,16 +43,16 @@ export function AuthProvider({ children }) {
   // Initial auth check on load
   useEffect(() => {
     const initAuth = async () => {
-      await checkAuthAndFetchUser();
+      await checkAuthAndFetchUser({ force: true });
       setIsLoading(false);
     };
     initAuth();
   }, []);
 
-  // Re-check auth on visibility change (tab focus)
+  // Re-check auth on visibility change (tab focus), only if not yet confirmed
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
+      if (document.visibilityState === "visible" && !authChecked) {
         checkAuthAndFetchUser();
       }
     };
@@ -54,7 +60,7 @@ export function AuthProvider({ children }) {
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () =>
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, []);
+  }, [authChecked]);
 
   const register = async (userData) => {
     try {
@@ -98,6 +104,7 @@ export function AuthProvider({ children }) {
       const userResult = await getUserInfo();
       if (userResult && userResult.status) {
         setUser(userResult.user);
+        setAuthChecked(true);
       }
 
       return { success: true };
@@ -108,6 +115,7 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     setUser(null);
+    setAuthChecked(false);
     await clearExpiredCookie();
   };
 
@@ -115,6 +123,7 @@ export function AuthProvider({ children }) {
     user,
     isAuthenticated: !!user,
     isLoading,
+    authChecked,
     register,
     login,
     logout,
