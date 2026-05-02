@@ -429,7 +429,10 @@ function Doctor() {
 
             {/* Sticky appointment button */}
             {doctor.isActive && (
-              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow transition duration-200 cursor-pointer">
+              <button
+                onClick={() => navigate(`/doctor/${id}/appointment`)}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow transition duration-200 cursor-pointer"
+              >
                 Prendre rendez-vous
               </button>
             )}

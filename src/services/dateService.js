@@ -261,6 +261,30 @@ export function formatSlotDate(dateKey) {
 }
 
 /**
+ * Returns today's date offset by `days` as a YYYY-MM-DD string.
+ * @param {number} days - Number of days to offset (positive = future, negative = past)
+ * @returns {string} Date in YYYY-MM-DD format
+ */
+export function offsetDate(days) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return DateUtils.toInputFormat(d);
+}
+
+/**
+ * Returns a YYYY-MM-DD base date offset by `days` as a YYYY-MM-DD string.
+ * @param {string} base - Base date in YYYY-MM-DD format
+ * @param {number} days - Number of days to offset
+ * @returns {string} Date in YYYY-MM-DD format
+ */
+export function offsetDateFrom(base, days) {
+  const [y, m, d] = base.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  date.setDate(date.getDate() + days);
+  return DateUtils.toInputFormat(date);
+}
+
+/**
  * Formats a duration in minutes to a human-readable string.
  * < 60  → "Xmin"
  * >= 60 → "Xh" (with remainder if not exact, e.g. "1h30")
