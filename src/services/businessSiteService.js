@@ -1,13 +1,13 @@
 import { API_URL } from "../config/config";
 
 /**
- * Fetch doctor by ID
- * @param {number|string} id - Doctor ID
+ * Fetch business site by ID (with doctors and their available slots)
+ * @param {number|string} id - Business site ID
  * @returns {Promise<{success: boolean, data?: object, error?: string}>}
  */
-export async function getDoctorById(id) {
+export async function getBusinessSiteById(id) {
   try {
-    const response = await fetch(`${API_URL}/doctor/${id}`, {
+    const response = await fetch(`${API_URL}/businesssites/${id}`, {
       method: "GET",
       credentials: "include",
       headers: { Accept: "application/json" },
@@ -16,7 +16,7 @@ export async function getDoctorById(id) {
     if (!response.ok) {
       return {
         success: false,
-        error: "Erreur lors de la récupération du médecin",
+        error: "Erreur lors de la récupération du cabinet",
       };
     }
 
@@ -25,7 +25,7 @@ export async function getDoctorById(id) {
       return { success: true, data: result.data };
     }
 
-    return { success: false, error: "Médecin non trouvé" };
+    return { success: false, error: "Cabinet non trouvé" };
   } catch (error) {
     console.error("API error:", error);
     return { success: false, error: "Erreur de connexion" };

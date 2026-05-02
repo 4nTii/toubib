@@ -156,10 +156,7 @@ function SearchBar({ variant = "header" }) {
   };
 
   const handleBusinessSiteSelect = (site) => {
-    const slug = encodeURIComponent(
-      site.name.toLowerCase().replace(/\s+/g, "-"),
-    );
-    navigate(`/businesssite/${site.id}/${slug}`);
+    navigate(`/cabinet/${site.id}`);
     closeSearchDropdown();
   };
 

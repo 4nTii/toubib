@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import Layout from "../../components/Layout/Layout";
 import GoogleMaps from "../../components/UiHTML/GoogleMaps";
 import { getDoctorById } from "../../services/doctorService";
@@ -13,6 +13,7 @@ import { FTP_TARGET } from "../../config/config";
 
 function Doctor() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [doctor, setDoctor] = useState(null);
   const [availableSlot, setAvailableSlot] = useState({});
   const [loading, setLoading] = useState(true);
@@ -24,7 +25,7 @@ function Doctor() {
       const result = await getDoctorById(id);
       if (result.success) {
         setDoctor(result.data.doctor);
-        setAvailableSlot(result.data.availableSlot ?? {});
+        setAvailableSlot(result.data.availableSlots ?? {});
       } else {
         setError(result.error);
       }
@@ -258,11 +259,15 @@ function Doctor() {
                     <div className="pt-1 flex flex-col gap-1 text-gray-300">
                       <span>
                         <span className="text-gray-500">Tél. </span>
-                        {primarySite.businessSite?.phone}
+                        <a href={`tel:${primarySite.businessSite?.phone}`}>
+                          {primarySite.businessSite?.phone}
+                        </a>
                       </span>
                       <span>
                         <span className="text-gray-500">Email </span>
-                        {primarySite.businessSite?.email}
+                        <a href={`mailto:${primarySite.businessSite?.email}`}>
+                          {primarySite.businessSite?.email}
+                        </a>
                       </span>
                     </div>
                     <div className="pt-3 mt-2 border-t border-gray-700">
@@ -360,7 +365,10 @@ function Doctor() {
                   {otherSites.map((dbs) => (
                     <li
                       key={dbs.id}
-                      className="py-2 flex items-center gap-3 text-sm"
+                      onClick={() =>
+                        navigate(`/cabinet/${dbs.businessSite?.id}`)
+                      }
+                      className="py-2 flex items-center gap-3 text-sm cursor-pointer hover:bg-gray-700 rounded px-2 -mx-2 transition"
                     >
                       <svg
                         className="w-4 h-4 text-gray-500 shrink-0"
@@ -452,7 +460,7 @@ function Doctor() {
                         <p className="text-gray-400 text-xs font-medium uppercase tracking-wider mb-1">
                           {`- ${label}`}
                         </p>
-                        <div className="flex flex-wrap gap-2 justify-center">
+                        <div className="flex flex-wrap gap-2 justify-start">
                           {slots.map((slot) => (
                             <span
                               key={slot.start}
