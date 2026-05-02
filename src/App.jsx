@@ -9,6 +9,7 @@ import Home from "./pages/Home";
 import Profile from "./pages/user/Profile";
 import Messages from "./pages/user/Messages";
 import Doctor from "./pages/doctor/Doctor";
+import BusinessSite from "./pages/businessSite/BusinessSite";
 
 function App() {
   return (
@@ -43,6 +44,7 @@ function App() {
           }
         />
         <Route path="/doctor/:id/:name" element={<Doctor />} />
+        <Route path="/cabinet/:id" element={<BusinessSite />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
