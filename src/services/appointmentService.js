@@ -2,6 +2,39 @@ import { API_URL } from "../config/config";
 import { offsetDate } from "./dateService";
 
 /**
+ * Book an appointment for a doctor
+ * @param {number|string} doctorId
+ * @param {number|string} userId
+ * @param {string} startDate - ISO datetime string (YYYY-MM-DDTHH:mm:ss)
+ * @param {string} endDate   - ISO datetime string (YYYY-MM-DDTHH:mm:ss)
+ * @param {string} [notes]   - optional consultation reason
+ * @returns {Promise<{success: boolean, data?: object, error?: string}>}
+ */
+export async function bookAppointment(doctorId, userId, startDate, endDate, notes) {
+  try {
+    const response = await fetch(`${API_URL}/doctor/${doctorId}/set-appointment`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ idUser: userId, startDate, endDate, ...(notes ? { notes } : {}) }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      return { success: false, error: result.message ?? "Erreur lors de la prise de rendez-vous" };
+    }
+
+    return { success: true, data: result.data ?? result };
+  } catch {
+    return { success: false, error: "Erreur de connexion" };
+  }
+}
+
+/**
  * Get available appointment slots for a doctor over a date range
  * @param {number|string} doctorId
  * @param {string} startDate - YYYY-MM-DD (defaults to today)

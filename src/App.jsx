@@ -1,5 +1,7 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { useAuth } from "./context/AuthContext";
+import { getPendingAppointment, clearPendingAppointment } from "./services/pendingAppointmentService";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/auth/Auth";
@@ -10,6 +12,7 @@ import Profile from "./pages/user/Profile";
 import Messages from "./pages/user/Messages";
 import Doctor from "./pages/doctor/Doctor";
 import Appointment from "./pages/doctor/Appointment";
+import Appointments from "./pages/user/Appointments";
 import BusinessSite from "./pages/businessSite/BusinessSite";
 
 function App() {
@@ -44,6 +47,14 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/appointments"
+          element={
+            <ProtectedRoute>
+              <Appointments />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/doctor/:id/:name" element={<Doctor />} />
         <Route path="/doctor/:id/appointment" element={<Appointment />} />
         <Route path="/cabinet/:id" element={<BusinessSite />} />
@@ -54,9 +65,28 @@ function App() {
   );
 }
 
-// Redirect to home if already logged in
+// Redirect to home (or pending appointment) if already logged in
 function AuthRoute() {
   const { isAuthenticated, isLoading } = useAuth();
+  const { state: routeState } = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isLoading || !isAuthenticated) return;
+
+    const pending = getPendingAppointment();
+    if (pending) {
+      clearPendingAppointment();
+      navigate(`/doctor/${pending.doctorId}/appointment`, {
+        replace: true,
+        state: { pendingAppointment: pending },
+      });
+      return;
+    }
+
+    const redirectTo = routeState?.redirectAfterAuth ?? "/home";
+    navigate(redirectTo, { replace: true });
+  }, [isAuthenticated, isLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (isLoading) {
     return (
@@ -66,9 +96,7 @@ function AuthRoute() {
     );
   }
 
-  if (isAuthenticated) {
-    return <Navigate to="/home" replace />;
-  }
+  if (isAuthenticated) return null;
 
   return <Auth />;
 }

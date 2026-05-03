@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import Layout from "../../components/Layout/Layout";
+import { useAuth } from "../../context/AuthContext";
 import { getDoctorById } from "../../services/doctorService";
-import { getAvailableSlots } from "../../services/appointmentService";
+import { getAvailableSlots, bookAppointment } from "../../services/appointmentService";
+import { savePendingAppointment } from "../../services/pendingAppointmentService";
 import DateUtils, {
   formatSlotDate,
   offsetDate,
@@ -13,6 +15,14 @@ import { FTP_TARGET } from "../../config/config";
 function Appointment() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { state: routeState } = useLocation();
+  const { user, isAuthenticated } = useAuth();
+
+  // Slot pré-sélectionné depuis Doctor.jsx ou repris après connexion
+  const pending = routeState?.pendingAppointment ?? null;
+  const preselectedDate = pending?.date ?? routeState?.preselectedDate ?? null;
+  const preselectedSlot = pending?.slot ?? routeState?.preselectedSlot ?? null;
+  const preselectedReason = pending?.reason ?? "";
 
   // Doctor info
   const [doctor, setDoctor] = useState(null);
@@ -24,15 +34,25 @@ function Appointment() {
   const [slotsError, setSlotsError] = useState(null);
 
   // Date range for the slot picker (week window)
-  const [startDate, setStartDate] = useState(offsetDate(0));
-  const [endDate, setEndDate] = useState(offsetDate(6));
+  const [startDate, setStartDate] = useState(() =>
+    preselectedDate ? preselectedDate : offsetDate(0)
+  );
+  const [endDate, setEndDate] = useState(() =>
+    preselectedDate ? offsetDateFrom(preselectedDate, 6) : offsetDate(6)
+  );
 
   // Selected slot
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(preselectedDate);
+  const [selectedSlot, setSelectedSlot] = useState(preselectedSlot);
+  const confirmationRef = useRef(null);
 
   // Appointment reason
-  const [reason, setReason] = useState("");
+  const [reason, setReason] = useState(preselectedReason);
+
+  // Submission state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bookingError, setBookingError] = useState(null);
+  const [bookingSuccess, setBookingSuccess] = useState(false);
 
   /* ── Fetch doctor info ─────────────────────────────────────── */
   useEffect(() => {
@@ -52,8 +72,6 @@ function Appointment() {
     async function fetchSlots() {
       setSlotsLoading(true);
       setSlotsError(null);
-      setSelectedDate(null);
-      setSelectedSlot(null);
       const result = await getAvailableSlots(id, startDate, endDate);
       if (result.success) {
         setSlots(result.data.availableSlots ?? {});
@@ -66,16 +84,62 @@ function Appointment() {
     fetchSlots();
   }, [id, startDate, endDate]);
 
+  /* ── Scroll vers la confirmation quand un slot est pré-sélectionné ── */
+  useEffect(() => {
+    if (!preselectedSlot || slotsLoading || !confirmationRef.current) return;
+    confirmationRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [slotsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ── Confirmation du rendez-vous ────────────────────────────────── */
+  const handleConfirm = async () => {
+    if (!selectedDate || !selectedSlot) return;
+
+    if (!isAuthenticated) {
+      savePendingAppointment({
+        doctorId: id,
+        date: selectedDate,
+        slot: selectedSlot,
+        reason,
+      });
+      navigate("/auth", {
+        state: { redirectAfterAuth: `/doctor/${id}/appointment` },
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    setBookingError(null);
+
+    const startDateTime = `${selectedDate}T${selectedSlot.start}:00`;
+    const endDateTime = `${selectedDate}T${selectedSlot.end}:00`;
+
+    const result = await bookAppointment(id, user.id, startDateTime, endDateTime, reason || undefined);
+
+    if (result.success) {
+      setBookingSuccess(true);
+      setSelectedSlot(null);
+      setSelectedDate(null);
+    } else {
+      setBookingError(result.error);
+    }
+
+    setIsSubmitting(false);
+  };
+
   /* ── Navigate week ─────────────────────────────────────────── */
   const goToPrevWeek = () => {
     const newStart = offsetDateFrom(startDate, -7);
     if (newStart < offsetDate(0)) return; // don't go before today
+    setSelectedDate(null);
+    setSelectedSlot(null);
     setStartDate(newStart);
     setEndDate(offsetDateFrom(newStart, 6));
   };
 
   const goToNextWeek = () => {
     const newStart = offsetDateFrom(startDate, 7);
+    setSelectedDate(null);
+    setSelectedSlot(null);
     setStartDate(newStart);
     setEndDate(offsetDateFrom(newStart, 6));
   };
@@ -177,11 +241,13 @@ function Appointment() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* ── Left : slot picker ──────────────────────────────────── */}
           <div className="lg:col-span-2 space-y-5">
             {/* Appointment form — visible only when a slot is selected */}
             {selectedSlot && (
-              <div className="bg-gray-800 rounded-xl p-5 space-y-4">
+              <div
+                ref={confirmationRef}
+                className="bg-gray-800 rounded-xl p-5 space-y-4"
+              >
                 <h2 className="text-base font-semibold text-white flex items-center gap-2">
                   <svg
                     className="w-4 h-4 text-blue-400"
@@ -260,14 +326,65 @@ function Appointment() {
                   />
                 </div>
 
+                {/* Error */}
+                {bookingError && (
+                  <p className="text-red-400 text-sm">{bookingError}</p>
+                )}
+
                 {/* Submit */}
-                <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition cursor-pointer">
-                  Confirmer le rendez-vous
+                <button
+                  onClick={handleConfirm}
+                  disabled={isSubmitting}
+                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition cursor-pointer"
+                >
+                  {isSubmitting
+                    ? "Confirmation en cours…"
+                    : !isAuthenticated
+                      ? "Se connecter pour confirmer"
+                      : "Confirmer le rendez-vous"}
                 </button>
               </div>
             )}
 
-            {/* Week navigation */}
+            {/* Booking success banner */}
+            {bookingSuccess && (
+              <div className="bg-green-900/40 border border-green-700 rounded-xl p-5 space-y-3">
+                <div className="flex items-start gap-3">
+                  <svg
+                    className="w-5 h-5 text-green-400 shrink-0 mt-0.5"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <div>
+                    <p className="text-green-300 font-semibold text-sm">
+                      Rendez-vous confirmé !
+                    </p>
+                    <p className="text-green-400 text-xs mt-0.5">
+                      Vous recevrez un rappel 24h avant votre consultation.
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  to="/appointments"
+                  className="flex items-center justify-center gap-2 w-full bg-green-700 hover:bg-green-600 text-white text-sm font-semibold py-2.5 rounded-lg transition"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Mes rendez-vous
+                </Link>
+              </div>
+            )}
+
+            {/* Week navigation — masqué après confirmation */}
+            {!bookingSuccess && (
             <div className="bg-gray-800 rounded-xl p-5">
               <div className="flex items-center justify-between mb-4">
                 <button
@@ -364,6 +481,15 @@ function Appointment() {
                               onClick={() => {
                                 setSelectedDate(dateKey);
                                 setSelectedSlot(slot);
+
+                                // Focus + scroll vers la confirmation
+                                setTimeout(() => {
+                                  confirmationRef.current?.scrollIntoView({
+                                    behavior: "smooth",
+                                    block: "center",
+                                  });
+                                  confirmationRef.current?.focus();
+                                }, 0);
                               }}
                               className={`text-sm font-medium px-3 py-1.5 rounded transition cursor-pointer ${
                                 isSelected
@@ -381,6 +507,7 @@ function Appointment() {
                 </div>
               )}
             </div>
+            )}
           </div>
 
           {/* ── Right : doctor contact info ─────────────────────────── */}

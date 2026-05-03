@@ -42,6 +42,7 @@ function Doctor() {
     const dates = Object.keys(availableSlot).sort();
     if (dates.length === 0) return null;
     return dates.slice(0, 3).map((dateKey) => ({
+      dateKey,
       label: formatSlotDate(dateKey),
       slots: (availableSlot[dateKey] ?? []).slice(0, 5),
     }));
@@ -458,19 +459,27 @@ function Doctor() {
                 }
                 return (
                   <div className="space-y-3">
-                    {availabilities.map(({ label, slots }) => (
-                      <div key={label}>
+                    {availabilities.map(({ dateKey, label, slots }) => (
+                      <div key={dateKey}>
                         <p className="text-gray-400 text-xs font-medium uppercase tracking-wider mb-1">
                           {`- ${label}`}
                         </p>
                         <div className="flex flex-wrap gap-2 justify-start">
                           {slots.map((slot) => (
-                            <span
+                            <button
                               key={slot.start}
+                              onClick={() =>
+                                navigate(`/doctor/${id}/appointment`, {
+                                  state: {
+                                    preselectedDate: dateKey,
+                                    preselectedSlot: slot,
+                                  },
+                                })
+                              }
                               className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium px-2.5 py-1 rounded-sm cursor-pointer transition"
                             >
                               {slot.start}
-                            </span>
+                            </button>
                           ))}
                         </div>
                       </div>
