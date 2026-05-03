@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { forgotPassword } from "../../services/authService";
 import logo from "../../assets/images/app/toubib-logo-w500.webp";
@@ -31,8 +31,6 @@ function Auth() {
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { login, register } = useAuth();
-  const navigate = useNavigate();
-
   const resetForm = () => {
     setEmail("");
     setPassword("");
@@ -72,7 +70,7 @@ function Auth() {
     const result = await login(email, password);
 
     if (result.success) {
-      navigate("/home");
+      // La redirection est gérée par AuthRoute via useEffect sur isAuthenticated
     } else {
       setError(result.error);
     }
