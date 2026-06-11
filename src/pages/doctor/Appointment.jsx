@@ -563,7 +563,7 @@ function Appointment() {
                       <dd>
                         <a
                           href={`mailto:${primarySite.businessSite.email}`}
-                          className="text-gray-200 hover:text-white transition truncate block max-w-36"
+                          className="text-gray-200 hover:text-white transition break-all"
                         >
                           {primarySite.businessSite.email}
                         </a>

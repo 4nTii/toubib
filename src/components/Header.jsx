@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import { APP_NAME } from "../config/config";
 import SearchBar from "./SearchBar";
+import BlindColorToggle from "./BlindColorToggle";
 
 import logo from "../assets/images/app/toubib-logo-w500.webp";
 
@@ -62,7 +63,8 @@ function Header() {
           </div>
 
           {/* Auth Section */}
-          <div className="flex items-center">
+          <div className="flex items-center gap-4">
+            <BlindColorToggle />
             {isAuthenticated ? (
               <div className="relative" ref={dropdownRef}>
                 <button

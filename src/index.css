@@ -27,3 +27,211 @@ body {
   background-image: url("/images/user/avatar-doctor-female.webp");
   background-size: contain;
 }
+
+/* BlindColor Mode - Enhanced contrast and saturation for accessibility */
+[data-blindcolor="true"] {
+  filter: saturate(1.15) contrast(1.08);
+}
+
+/* Override gray backgrounds for better contrast */
+[data-blindcolor="true"] .bg-gray-50 {
+  @apply bg-gray-100;
+}
+
+[data-blindcolor="true"] .bg-gray-100 {
+  @apply bg-gray-200;
+}
+
+[data-blindcolor="true"] .bg-gray-200 {
+  @apply bg-gray-300;
+}
+
+[data-blindcolor="true"] .bg-gray-300 {
+  @apply bg-gray-400;
+}
+
+[data-blindcolor="true"] .bg-gray-400 {
+  @apply bg-gray-500;
+}
+
+[data-blindcolor="true"] .bg-gray-500 {
+  @apply bg-gray-600;
+}
+
+[data-blindcolor="true"] .bg-gray-600 {
+  @apply bg-gray-700;
+}
+
+[data-blindcolor="true"] .bg-gray-700 {
+  @apply bg-gray-800;
+}
+
+[data-blindcolor="true"] .bg-gray-800 {
+  @apply bg-gray-900;
+}
+
+[data-blindcolor="true"] .bg-gray-900 {
+  @apply bg-gray-950;
+}
+
+/* Override text colors for better contrast */
+[data-blindcolor="true"] .text-gray-50 {
+  @apply text-gray-200;
+}
+
+[data-blindcolor="true"] .text-gray-100 {
+  @apply text-gray-300;
+}
+
+[data-blindcolor="true"] .text-gray-200 {
+  @apply text-gray-100;
+}
+
+[data-blindcolor="true"] .text-gray-300 {
+  @apply text-gray-100;
+}
+
+[data-blindcolor="true"] .text-gray-400 {
+  @apply text-gray-200;
+}
+
+[data-blindcolor="true"] .text-gray-500 {
+  @apply text-gray-300;
+}
+
+[data-blindcolor="true"] .text-gray-600 {
+  @apply text-gray-400;
+}
+
+[data-blindcolor="true"] .text-gray-700 {
+  @apply text-gray-300;
+}
+
+[data-blindcolor="true"] .text-gray-800 {
+  @apply text-gray-100;
+}
+
+[data-blindcolor="true"] .text-gray-900 {
+  @apply text-gray-50;
+}
+
+/* Enhance accent colors - increase saturation */
+[data-blindcolor="true"] .bg-blue-400 {
+  @apply bg-blue-500;
+}
+
+[data-blindcolor="true"] .bg-blue-500 {
+  @apply bg-blue-600;
+}
+
+[data-blindcolor="true"] .bg-blue-600 {
+  @apply bg-blue-700;
+}
+
+[data-blindcolor="true"] .text-blue-400 {
+  @apply text-blue-500;
+}
+
+[data-blindcolor="true"] .text-blue-500 {
+  @apply text-blue-600;
+}
+
+[data-blindcolor="true"] .text-blue-600 {
+  @apply text-blue-700;
+}
+
+[data-blindcolor="true"] .bg-green-400 {
+  @apply bg-green-500;
+}
+
+[data-blindcolor="true"] .bg-green-500 {
+  @apply bg-green-600;
+}
+
+[data-blindcolor="true"] .bg-green-600 {
+  @apply bg-green-700;
+}
+
+[data-blindcolor="true"] .text-green-400 {
+  @apply text-green-500;
+}
+
+[data-blindcolor="true"] .text-green-500 {
+  @apply text-green-600;
+}
+
+[data-blindcolor="true"] .text-green-600 {
+  @apply text-green-700;
+}
+
+[data-blindcolor="true"] .bg-red-400 {
+  @apply bg-red-500;
+}
+
+[data-blindcolor="true"] .bg-red-500 {
+  @apply bg-red-600;
+}
+
+[data-blindcolor="true"] .bg-red-600 {
+  @apply bg-red-700;
+}
+
+[data-blindcolor="true"] .text-red-400 {
+  @apply text-red-500;
+}
+
+[data-blindcolor="true"] .text-red-500 {
+  @apply text-red-600;
+}
+
+[data-blindcolor="true"] .text-red-600 {
+  @apply text-red-700;
+}
+
+[data-blindcolor="true"] .bg-orange-400 {
+  @apply bg-orange-500;
+}
+
+[data-blindcolor="true"] .bg-orange-500 {
+  @apply bg-orange-600;
+}
+
+[data-blindcolor="true"] .text-orange-400 {
+  @apply text-orange-500;
+}
+
+[data-blindcolor="true"] .text-orange-500 {
+  @apply text-orange-600;
+}
+
+[data-blindcolor="true"] .bg-yellow-400 {
+  @apply bg-yellow-500;
+}
+
+[data-blindcolor="true"] .bg-yellow-500 {
+  @apply bg-yellow-600;
+}
+
+[data-blindcolor="true"] .text-yellow-400 {
+  @apply text-yellow-500;
+}
+
+[data-blindcolor="true"] .text-yellow-500 {
+  @apply text-yellow-600;
+}
+
+[data-blindcolor="true"] .bg-purple-400 {
+  @apply bg-purple-500;
+}
+
+[data-blindcolor="true"] .bg-purple-500 {
+  @apply bg-purple-600;
+}
+
+[data-blindcolor="true"] .text-purple-400 {
+  @apply text-purple-500;
+}
+
+[data-blindcolor="true"] .text-purple-500 {
+  @apply text-purple-600;
+}

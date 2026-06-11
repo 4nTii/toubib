@@ -11,20 +11,21 @@ import {
   RegionIcon,
 } from "../services/IconService";
 
-const DEBOUNCE_DELAY = 300;
-const MIN_SEARCH_LENGTH = 3;
-
-const DEFAULT_AVATARS = {
-  female: "/images/user/avatar-doctor-female.webp",
-  male: "/images/user/avatar-doctor-male.webp",
+const CONFIG = {
+  DEBOUNCE_DELAY: 300,
+  MIN_SEARCH_LENGTH: 3,
+  DEFAULT_AVATARS: {
+    female: "/images/user/avatar-doctor-female.webp",
+    male: "/images/user/avatar-doctor-male.webp",
+  },
 };
 
-function SearchBar({ variant = "header" }) {
+function SearchBar({ variant = "header", initialSearch = "", initialLocation = "" }) {
   const navigate = useNavigate();
   const isCompact = variant === "header";
 
   // Search state
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(initialSearch || "");
   const [searchResults, setSearchResults] = useState({
     doctors: [],
     businessSite: [],
@@ -35,8 +36,8 @@ function SearchBar({ variant = "header" }) {
   const [hasSearched, setHasSearched] = useState(false);
 
   // Location state
-  const [locationQuery, setLocationQuery] = useState("");
-  const [locationResults, setLocationResults] = useState({ region: [] });
+  const [locationQuery, setLocationQuery] = useState(initialLocation || "");
+  const [locationResults, setLocationResults] = useState({ regions: [], villes: [] });
   const [isLocationFocused, setIsLocationFocused] = useState(false);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [hasSearchedLocation, setHasSearchedLocation] = useState(false);
@@ -64,7 +65,7 @@ function SearchBar({ variant = "header" }) {
   // Helpers
   const getDoctorImageUrl = (imagePath, gender) => {
     if (imagePath) return `${FTP_TARGET}/${imagePath}`;
-    return DEFAULT_AVATARS[gender] || DEFAULT_AVATARS.male;
+    return CONFIG.DEFAULT_AVATARS[gender] || CONFIG.DEFAULT_AVATARS.male;
   };
 
   const hasResults = () => {
@@ -77,8 +78,8 @@ function SearchBar({ variant = "header" }) {
   };
 
   const hasLocationResults = () => {
-    const { region } = locationResults;
-    return region?.length > 0;
+    const { regions, villes } = locationResults;
+    return (regions?.length > 0) || (villes?.length > 0);
   };
 
   // API calls
@@ -100,7 +101,7 @@ function SearchBar({ variant = "header" }) {
     if (result.success) {
       setLocationResults(result.data);
     } else {
-      setLocationResults({ region: [] });
+      setLocationResults({ regions: [], villes: [] });
     }
     setHasSearchedLocation(true);
     setIsLoadingLocation(false);
@@ -115,7 +116,7 @@ function SearchBar({ variant = "header" }) {
       clearTimeout(searchTimeoutRef.current);
     }
 
-    if (value.length < MIN_SEARCH_LENGTH) {
+    if (value.length < CONFIG.MIN_SEARCH_LENGTH) {
       setSearchResults({ doctors: [], businessSite: [], specialities: [] });
       setHasSearched(false);
       return;
@@ -123,7 +124,7 @@ function SearchBar({ variant = "header" }) {
 
     searchTimeoutRef.current = setTimeout(
       () => fetchSearchResults(value),
-      DEBOUNCE_DELAY,
+      CONFIG.DEBOUNCE_DELAY,
     );
   };
 
@@ -135,15 +136,15 @@ function SearchBar({ variant = "header" }) {
       clearTimeout(locationTimeoutRef.current);
     }
 
-    if (value.length < MIN_SEARCH_LENGTH) {
-      setLocationResults({ region: [] });
+    if (value.length < CONFIG.MIN_SEARCH_LENGTH) {
+      setLocationResults({ regions: [], villes: [] });
       setHasSearchedLocation(false);
       return;
     }
 
     locationTimeoutRef.current = setTimeout(
       () => fetchLocationResults(value),
-      DEBOUNCE_DELAY,
+      CONFIG.DEBOUNCE_DELAY,
     );
   };
 
@@ -161,20 +162,17 @@ function SearchBar({ variant = "header" }) {
   };
 
   const handleSpecialitySelect = (speciality) => {
-    const slug = encodeURIComponent(
-      speciality.name.toLowerCase().replace(/\s+/g, "-"),
-    );
-    navigate(`/specialty/${speciality.id}/${slug}`);
+    setSearchQuery(speciality.name);
     closeSearchDropdown();
   };
 
-  const handleRegionSelect = (region) => {
-    setLocationQuery(region.name);
+  const handleRegionSelect = (location) => {
+    setLocationQuery(location);
     closeLocationDropdown();
   };
 
   const closeLocationDropdown = () => {
-    setLocationResults({ region: [] });
+    setLocationResults({ regions: [], villes: [] });
     setIsLocationFocused(false);
     setHasSearchedLocation(false);
   };
@@ -286,29 +284,45 @@ function SearchBar({ variant = "header" }) {
     return sections;
   };
 
-  const renderRegionItem = (region) => (
-    <button
-      key={`region-${region.id}`}
-      type="button"
-      onClick={() => handleRegionSelect(region)}
-      className="w-full text-left px-3 py-2 text-white hover:bg-gray-600 transition cursor-pointer flex items-center gap-2"
-    >
-      <div className="w-9 h-9 rounded-lg bg-orange-600/20 shrink-0 flex items-center justify-center">
-        <RegionIcon />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="text-white text-sm truncate">{region.name}</div>
-        <div className="text-xs text-orange-400">Région</div>
-      </div>
-    </button>
-  );
+  const renderLocationItem = (name, type) => {
+    const isVille = type === "ville";
+    const icon = isVille ? <LocationPinIcon /> : <RegionIcon />;
+    const bgColor = isVille ? "bg-blue-600/20" : "bg-orange-600/20";
+    const textColor = isVille ? "text-blue-400" : "text-orange-400";
+    const label = isVille ? "Ville" : "Région";
+    const key = isVille ? `ville-${name}` : `region-${name}`;
+
+    return (
+      <button
+        key={key}
+        type="button"
+        onClick={() => handleRegionSelect(name)}
+        className="w-full text-left px-3 py-2 text-white hover:bg-gray-600 transition cursor-pointer flex items-center gap-2"
+      >
+        <div className={`w-9 h-9 rounded-lg ${bgColor} shrink-0 flex items-center justify-center`}>
+          {icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-white text-sm truncate">{name}</div>
+          <div className={`text-xs ${textColor}`}>{label}</div>
+        </div>
+      </button>
+    );
+  };
 
   const renderLocationResults = () => {
-    const { region } = locationResults;
+    const { regions, villes } = locationResults;
     const sections = [];
 
-    if (region?.length > 0) {
-      sections.push(<div key="region">{region.map(renderRegionItem)}</div>);
+    if (villes?.length > 0) {
+      sections.push(<div key="villes">{villes.map((name) => renderLocationItem(name, "ville"))}</div>);
+    }
+
+    if (regions?.length > 0) {
+      if (sections.length > 0) {
+        sections.push(<div key="divider" className="border-t border-gray-600" />);
+      }
+      sections.push(<div key="regions">{regions.map((name) => renderLocationItem(name, "region"))}</div>);
     }
 
     return sections;

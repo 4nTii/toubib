@@ -1,0 +1,18 @@
+services:
+
+  # -----------------------------------------
+  # React frontend - toubib (shared base)
+  # -----------------------------------------
+  toubib:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: toubib_front
+    restart: unless-stopped
+    networks:
+      - toubib_network
+
+networks:
+  toubib_network:
+    external: true
+    name: toubibapi_toubib_network

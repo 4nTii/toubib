@@ -1,8 +1,7 @@
 import { API_URL } from "../config/config";
 
-/**
- * Generic fetch helper
- */
+const MIN_SEARCH_LENGTH = 3;
+
 async function fetchApi(endpoint, params = {}) {
   const queryString = new URLSearchParams(params).toString();
   const url = queryString ? `${API_URL}${endpoint}?${queryString}` : `${API_URL}${endpoint}`;
@@ -26,26 +25,43 @@ async function fetchApi(endpoint, params = {}) {
   }
 }
 
-/**
- * Search for doctors, specialties, establishments
- * @param {string} value - Search query
- * @returns {Promise<{success: boolean, data?: {doctors: array, businessSite: array, specialities: array}, error?: string}>}
- */
 export async function search(value) {
-  if (value.length < 3) {
+  if (value.length < MIN_SEARCH_LENGTH) {
     return { success: true, data: { doctors: [], businessSite: [], specialities: [] } };
   }
   return fetchApi("/search", { value });
 }
 
-/**
- * Search for geographic locations (regions)
- * @param {string} value - Location query
- * @returns {Promise<{success: boolean, data?: {region: array}, error?: string}>}
- */
 export async function searchGeo(value) {
-  if (value.length < 3) {
-    return { success: true, data: { region: [] } };
+  if (value.length < MIN_SEARCH_LENGTH) {
+    return { success: true, data: { regions: [], villes: [] } };
   }
-  return fetchApi("/searchgeo", { value });
+
+  const result = await fetchApi("/searchgeo", { value });
+  if (result.success) {
+    return { success: true, data: { regions: result.data.regions || [], villes: result.data.villes || [] } };
+  }
+  return result;
+}
+
+export async function searchResults(searchValue, location, page = 1, limit = 10) {
+  try {
+    const params = new URLSearchParams();
+    if (searchValue) params.set("searchValue", searchValue);
+    if (location) params.set("location", location);
+    params.set("page", page);
+    params.set("limit", limit);
+
+    const response = await fetch(`${API_URL}/search/results?${params.toString()}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+    });
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Search results fetch error:", error);
+    return { success: false, error: error.message };
+  }
 }
