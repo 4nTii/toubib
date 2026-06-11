@@ -1,4 +1,7 @@
+import { useState, useEffect } from "react";
 import Layout from "../../components/Layout/Layout";
+import { getUserAppointments } from "../../services/userAppointmentsService";
+import { FTP_TARGET } from "../../config/config";
 
 /* ── Statut badge ─────────────────────────────────────────────── */
 const STATUS_MAP = {
@@ -121,10 +124,30 @@ function EmptyState() {
 
 /* ── Page principale ─────────────────────────────────────────── */
 function Appointments() {
-  // TODO: remplacer par un appel API quand le endpoint sera disponible
-  const appointments = [];
+  const [appointments, setAppointments] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showMoreHistory, setShowMoreHistory] = useState(false);
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      setIsLoading(true);
+      setError(null);
+      const result = await getUserAppointments();
+      if (result.success) {
+        setAppointments(result.data || []);
+      } else {
+        setError(result.error);
+        setAppointments([]);
+      }
+      setIsLoading(false);
+    };
+    fetchAppointments();
+  }, []);
+
   const upcoming = appointments.filter((a) => a.status === "confirmed" || a.status === "pending");
-  const past     = appointments.filter((a) => a.status === "completed" || a.status === "cancelled");
+  const past = appointments.filter((a) => a.status === "completed" || a.status === "cancelled");
+  const historyToShow = showMoreHistory ? past : past.slice(0, 3);
 
   return (
     <Layout>
@@ -137,15 +160,23 @@ function Appointments() {
           </p>
         </div>
 
-        {appointments.length === 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center py-20">
+            <p className="text-gray-400">Chargement...</p>
+          </div>
+        ) : error ? (
+          <div className="bg-red-900/20 border border-red-600 rounded-lg p-4">
+            <p className="text-red-400">{error}</p>
+          </div>
+        ) : appointments.length === 0 ? (
           <EmptyState />
         ) : (
           <>
-            {/* Upcoming */}
+            {/* Prochains rendez-vous */}
             {upcoming.length > 0 && (
               <section className="space-y-3">
                 <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
-                  À venir
+                  Prochains rendez-vous
                 </h2>
                 {upcoming.map((a) => (
                   <AppointmentCard key={a.id} appointment={a} />
@@ -153,15 +184,35 @@ function Appointments() {
               </section>
             )}
 
-            {/* Past */}
+            {/* Historique des rendez-vous */}
             {past.length > 0 && (
               <section className="space-y-3">
                 <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
-                  Passés
+                  Historique des rendez-vous
                 </h2>
-                {past.map((a) => (
+                {historyToShow.map((a) => (
                   <AppointmentCard key={a.id} appointment={a} />
                 ))}
+
+                {/* Bouton "Afficher plus" */}
+                {past.length > 3 && !showMoreHistory && (
+                  <button
+                    onClick={() => setShowMoreHistory(true)}
+                    className="w-full mt-4 px-4 py-2.5 bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white rounded-lg transition font-medium text-sm"
+                  >
+                    Afficher plus ({past.length - 3} rendez-vous supplémentaires)
+                  </button>
+                )}
+
+                {/* Bouton "Afficher moins" */}
+                {showMoreHistory && (
+                  <button
+                    onClick={() => setShowMoreHistory(false)}
+                    className="w-full mt-4 px-4 py-2.5 bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white rounded-lg transition font-medium text-sm"
+                  >
+                    Afficher moins
+                  </button>
+                )}
               </section>
             )}
           </>
