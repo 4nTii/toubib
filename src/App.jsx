@@ -14,6 +14,7 @@ import Doctor from "./pages/doctor/Doctor";
 import Appointment from "./pages/doctor/Appointment";
 import Appointments from "./pages/user/Appointments";
 import BusinessSite from "./pages/businessSite/BusinessSite";
+import Search from "./pages/Search";
 
 function App() {
   return (
@@ -58,6 +59,7 @@ function App() {
         <Route path="/doctor/:id/:name" element={<Doctor />} />
         <Route path="/doctor/:id/appointment" element={<Appointment />} />
         <Route path="/cabinet/:id" element={<BusinessSite />} />
+        <Route path="/search" element={<Search />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
