@@ -104,7 +104,13 @@ const DateUtils = {
     const seconds = Math.floor(absMs / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
+
+    // Calendar-day diff: ignore the time-of-day component to avoid off-by-one
+    const nowMidnight = new Date(now);
+    nowMidnight.setHours(0, 0, 0, 0);
+    const dateMidnight = new Date(date);
+    dateMidnight.setHours(0, 0, 0, 0);
+    const days = Math.round(Math.abs(dateMidnight - nowMidnight) / (1000 * 60 * 60 * 24));
 
     // Same calendar day
     const sameDay =
@@ -300,4 +306,34 @@ export function formatDuration(minutes) {
   const h = Math.floor(m / 60);
   const rem = m % 60;
   return rem === 0 ? `${h}h` : `${h}h${rem}`;
+}
+
+/**
+ * Get appointment status label based on date (e.g., "dans 2j", "Demain", "Aujourd'hui", "Passé")
+ * @param {string} dateString - Date string in any supported format
+ * @returns {string} Status label
+ */
+export function getAppointmentStatusLabel(dateString) {
+  const date = DateUtils.parseDate(dateString);
+  if (!date || isNaN(date.getTime())) return "";
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const apptDate = new Date(date);
+  apptDate.setHours(0, 0, 0, 0);
+
+  const diffTime = apptDate - today;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) {
+    return "Passé";
+  } else if (diffDays === 0) {
+    return "Aujourd'hui";
+  } else if (diffDays === 1) {
+    return "Demain";
+  } else if (diffDays <= 7) {
+    return `dans ${diffDays}j`;
+  } else {
+    return `dans ${Math.floor(diffDays / 7)}sem`;
+  }
 }
