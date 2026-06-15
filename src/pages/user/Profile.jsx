@@ -42,19 +42,40 @@ function Profile() {
   ];
 
   const [appointments, setAppointments] = useState([]);
+  const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [appointmentsLoading, setAppointmentsLoading] = useState(true);
+  const [showAllAppointments, setShowAllAppointments] = useState(false);
+  const ITEMS_PER_PAGE = 5;
+  const INITIAL_ITEMS = 3;
 
   useEffect(() => {
     async function fetchAppointments() {
       setAppointmentsLoading(true);
       const result = await getUserAppointments();
       if (result.success) {
-        setAppointments(result.data || []);
+        const allAppointments = result.data || [];
+
+        // Filter to show only past appointments
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const pastAppointments = allAppointments.filter(appointment => {
+          const appointmentDate = new Date(appointment.appointmentDate);
+          appointmentDate.setHours(0, 0, 0, 0);
+          return appointmentDate < today;
+        });
+
+        setAppointments(pastAppointments);
+        setFilteredAppointments(pastAppointments);
       }
       setAppointmentsLoading(false);
     }
     fetchAppointments();
   }, []);
+
+  const displayedAppointments = showAllAppointments
+    ? filteredAppointments
+    : filteredAppointments.slice(0, INITIAL_ITEMS);
 
   const handleProfileEditClick = () => {
     setFormData({
@@ -333,39 +354,61 @@ function Profile() {
         </h2>
         {appointmentsLoading ? (
           <div className="text-center py-8 text-gray-400">Chargement...</div>
-        ) : appointments.length === 0 ? (
+        ) : filteredAppointments.length === 0 ? (
           <div className="text-center py-8 text-gray-400">Aucun rendez-vous</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-gray-700">
-                  <th className="px-4 py-3 text-gray-400 font-medium">Date</th>
-                  <th className="px-4 py-3 text-gray-400 font-medium">Patient</th>
-                  <th className="px-4 py-3 text-gray-400 font-medium">Docteur</th>
-                </tr>
-              </thead>
-              <tbody>
-                {appointments.map((appointment) => (
-                  <tr
-                    key={appointment.id}
-                    className="border-b border-gray-700 hover:bg-gray-700 transition duration-200"
-                  >
-                    <td className="px-4 py-3 text-white">
-                      <span className="md:hidden">{appointment.dateIso}</span>
-                      <span className="hidden md:inline">{appointment.date}</span>
-                    </td>
-                    <td className="px-4 py-3 text-white text-sm">
-                      {user?.firstName} {user?.lastName}
-                    </td>
-                    <td className="px-4 py-3 text-white text-sm">
-                      Dr. {appointment.doctorFirstName} {appointment.doctorLastName} ({appointment.businessSiteAddress?.split(',').pop()?.trim() || 'N/A'})
-                    </td>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-gray-700">
+                    <th className="px-4 py-3 text-gray-400 font-medium">Date</th>
+                    <th className="px-4 py-3 text-gray-400 font-medium">Patient</th>
+                    <th className="px-4 py-3 text-gray-400 font-medium">Docteur</th>
+                    <th className="px-4 py-3 text-gray-400 font-medium text-right">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {displayedAppointments.map((appointment) => (
+                    <tr
+                      key={appointment.id}
+                      className="border-b border-gray-700 hover:bg-gray-700 transition duration-200"
+                    >
+                      <td className="px-4 py-3 text-white">
+                        <span className="md:hidden">{appointment.dateIso}</span>
+                        <span className="hidden md:inline">{appointment.date}</span>
+                      </td>
+                      <td className="px-4 py-3 text-white text-sm">
+                        {user?.firstName} {user?.lastName}
+                      </td>
+                      <td className="px-4 py-3 text-white text-sm">
+                        Dr. {appointment.doctorFirstName} {appointment.doctorLastName} ({appointment.businessSiteAddress?.split(',').pop()?.trim() || 'N/A'})
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => alert('Fonctionnalité à venir')}
+                          className="bg-blue-600 hover:bg-blue-700 text-white rounded text-xs px-3 py-1 transition duration-200"
+                        >
+                          Document
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {!showAllAppointments && filteredAppointments.length > INITIAL_ITEMS && (
+              <div className="flex justify-center mt-6">
+                <button
+                  onClick={() => setShowAllAppointments(true)}
+                  className="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-2 rounded-lg transition duration-200"
+                >
+                  Afficher plus
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </Layout>
