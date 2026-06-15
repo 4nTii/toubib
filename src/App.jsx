@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from
 import { useEffect } from "react";
 import { useAuth } from "./context/AuthContext";
 import { getPendingAppointment, clearPendingAppointment } from "./services/pendingAppointmentService";
-import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedRoute from "./components/ui/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/auth/Auth";
 import VerifyAccount from "./pages/auth/VerifyAccount";

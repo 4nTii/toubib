@@ -40,6 +40,8 @@ export async function getUserInfo() {
       address: userData.address,
       photo: userData.photo,
       biography: userData.biography,
+      socialNumber: userData.socialNumber || null,
+      mainDoctor: userData.mainDoctor || null,
       dateInscription: userData.dateInscription,
       lastLogin: userData.lastLogin ? new Date(userData.lastLogin) : null,
       isActive: userData.isActive,

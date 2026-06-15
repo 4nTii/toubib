@@ -202,7 +202,7 @@ function BusinessSite() {
                                   : "/images/user/avatar-doctor-male.webp"
                               }
                               alt={`Dr. ${doc.firstName} ${doc.lastName}`}
-                              className="w-14 h-14 rounded-full object-cover ring-2 ring-gray-600 shrink-0"
+                              className="w-14 h-14 rounded-full object-cover shrink-0"
                               onError={(e) => {
                                 e.currentTarget.src =
                                   "/images/user/avatar-doctor-male.webp";

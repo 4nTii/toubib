@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
-import { APP_NAME } from "../config/config";
-import SearchBar from "./SearchBar";
-import BlindColorToggle from "./BlindColorToggle";
+import { APP_NAME } from "../../config/config";
+import SearchBar from "../ui/SearchBar";
+import BlindColorToggle from "../BlindColorToggle";
 
-import logo from "../assets/images/app/toubib-logo-w500.webp";
+import logo from "../../assets/images/app/toubib-logo-w500.webp";
 
 const logoSmall = "/images/app/toubib-logo-small.webp";
 
