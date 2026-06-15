@@ -1,15 +1,42 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import Layout from "../../components/Layout/Layout";
 import { VerifiedIcon } from "../../components/UiHTML/VerifiedIcon";
 import DateUtils from "../../services/dateService";
 import { updateUserProfile } from "../../services/authService";
 import { getUserAppointments } from "../../services/userAppointmentsService";
+import { FTP_TARGET } from "../../config/config";
+
+// Format social security number: 1 23 45 67 890 123 123
+const formatSocialNumber = (number) => {
+  if (!number) return "";
+  const cleaned = number.toString().replace(/\D/g, "").slice(0, 15);
+  if (cleaned.length === 0) return "";
+
+  let formatted = "";
+  const groups = [1, 2, 2, 2, 3, 3, 3];
+  let position = 0;
+
+  for (let i = 0; i < groups.length; i++) {
+    const groupSize = groups[i];
+    const end = position + groupSize;
+    if (position < cleaned.length) {
+      if (formatted) formatted += " ";
+      formatted += cleaned.substring(position, Math.min(end, cleaned.length));
+      position = end;
+    }
+  }
+
+  return formatted;
+};
 
 function Profile() {
   const { user, fetchUserInfo } = useAuth();
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState(null);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -17,6 +44,7 @@ function Profile() {
     gender: "",
     address: "",
     email: "",
+    socialNumber: "",
   });
 
   // Mock proches (attached accounts) data
@@ -89,6 +117,7 @@ function Profile() {
       gender: user?.gender || "",
       address: user?.address || "",
       email: user?.email || "",
+      socialNumber: user?.socialNumber || "",
     });
     setIsEditing(true);
   };
@@ -99,7 +128,13 @@ function Profile() {
 
   const handleProfileInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === "socialNumber") {
+      // Remove spaces from social number before saving
+      const cleaned = value.replace(/\s/g, "");
+      setFormData((prev) => ({ ...prev, [name]: cleaned }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleProfileSaveClick = async () => {
@@ -118,6 +153,8 @@ function Profile() {
     if (formData.address !== user?.address)
       changedFields.address = formData.address;
     if (formData.email !== user?.email) changedFields.email = formData.email;
+    if (formData.socialNumber !== (user?.socialNumber || ""))
+      changedFields.socialNumber = formData.socialNumber;
 
     if (Object.keys(changedFields).length === 0) {
       setIsEditing(false);
@@ -128,10 +165,28 @@ function Profile() {
     const result = await updateUserProfile(changedFields);
 
     if (result.success) {
-      await fetchUserInfo();
+      // Wait a moment and fetch user info to ensure the update is persisted
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await fetchUserInfo({ force: true });
       setIsEditing(false);
+      setSaveMessage({ type: "success", text: "Profil mis à jour avec succès" });
+      // Reset form data after successful update
+      setFormData({
+        firstName: "",
+        lastName: "",
+        birthDay: "",
+        gender: "",
+        address: "",
+        email: "",
+        socialNumber: "",
+      });
+      // Clear message after 3 seconds
+      setTimeout(() => setSaveMessage(null), 3000);
     } else {
       console.error("Failed to update profile:", result.error);
+      setSaveMessage({ type: "error", text: result.error || "Erreur lors de la mise à jour du profil" });
+      // Clear message after 3 seconds
+      setTimeout(() => setSaveMessage(null), 3000);
     }
 
     setIsSaving(false);
@@ -143,6 +198,17 @@ function Profile() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {/* User Info */}
         <div className="bg-gray-800 rounded-lg p-4">
+          {saveMessage && (
+            <div
+              className={`mb-4 p-3 rounded-lg ${
+                saveMessage.type === "success"
+                  ? "bg-green-900/30 border border-green-700 text-green-300"
+                  : "bg-red-900/30 border border-red-700 text-red-300"
+              }`}
+            >
+              {saveMessage.text}
+            </div>
+          )}
           <div className="flex justify-between items-center mb-2">
             <h2 className="text-lg font-semibold text-white">
               Informations personnelles
@@ -199,29 +265,31 @@ function Profile() {
                     />
                   </div>
                 </div>
-                <div>
-                  <span className="text-gray-400 text-xs">Genre</span>
-                  <select
-                    name="gender"
-                    value={formData.gender}
-                    onChange={handleProfileInputChange}
-                    className="w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  >
-                    <option value="male">Masculin</option>
-                    <option value="female">Féminin</option>
-                  </select>
-                </div>
-                <div>
-                  <span className="text-gray-400 text-xs">
-                    Date de naissance
-                  </span>
-                  <input
-                    type="date"
-                    name="birthDay"
-                    value={formData.birthDay}
-                    onChange={handleProfileInputChange}
-                    className="w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-gray-400 text-xs">Genre</span>
+                    <select
+                      name="gender"
+                      value={formData.gender}
+                      onChange={handleProfileInputChange}
+                      className="w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    >
+                      <option value="male">Masculin</option>
+                      <option value="female">Féminin</option>
+                    </select>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 text-xs">
+                      Date de naissance
+                    </span>
+                    <input
+                      type="date"
+                      name="birthDay"
+                      value={formData.birthDay}
+                      onChange={handleProfileInputChange}
+                      className="w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
                 </div>
                 <div>
                   <span className="text-gray-400 text-xs">Adresse</span>
@@ -241,6 +309,16 @@ function Profile() {
                     value={formData.email}
                     onChange={handleProfileInputChange}
                     className="w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <span className="text-gray-400 text-xs">Numéro de sécurité sociale</span>
+                  <input
+                    type="text"
+                    name="socialNumber"
+                    value={formatSocialNumber(formData.socialNumber)}
+                    onChange={handleProfileInputChange}
+                    className="w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
                   />
                 </div>
               </>
@@ -280,43 +358,85 @@ function Profile() {
                   </span>
                   <p className="text-white text-sm">{user?.email}</p>
                 </div>
+                <div>
+                  <span className="text-gray-400 text-xs">
+                    Numéro de sécurité sociale
+                  </span>
+                  <p className="text-white text-sm font-mono">{formatSocialNumber(user?.socialNumber) || "Non renseigné"}</p>
+                </div>
               </>
             )}
           </div>
         </div>
 
-        {/* Connection & Payment Methods */}
-        <div className="bg-gray-800 rounded-lg p-4">
-          <div className="flex justify-between items-center mb-2">
-            <h2 className="text-lg font-semibold text-white">
-              Connexion et paiement
+        {/* Main Doctor & Connection & Payment */}
+        <div className="bg-gray-800 rounded-lg p-4 space-y-6">
+          {/* Médecin traitant */}
+          <div>
+            <h2 className="text-lg font-semibold text-white mb-4">
+              Médecin traitant
             </h2>
-            <button className="text-sm text-blue-400 hover:text-blue-300 transition duration-200 cursor-pointer">
-              Modifier
-            </button>
+            {user?.mainDoctor ? (
+              <button
+                onClick={() => {
+                  const slug = encodeURIComponent(
+                    `${user.mainDoctor.firstName}-${user.mainDoctor.lastName}`.toLowerCase().replace(/\s+/g, "-")
+                  );
+                  navigate(`/doctor/${user.mainDoctor.id}/${slug}`);
+                }}
+                className="w-full flex items-center gap-3 p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition duration-200 cursor-pointer"
+              >
+                <img
+                  src={user.mainDoctor.photo ? `${FTP_TARGET}/${user.mainDoctor.photo}` : "/images/user/avatar-doctor-male.webp"}
+                  alt={`Dr. ${user.mainDoctor.firstName} ${user.mainDoctor.lastName}`}
+                  className="w-12 h-12 rounded-full object-cover shrink-0"
+                  onError={(e) => { e.currentTarget.src = "/images/user/avatar-doctor-male.webp"; }}
+                />
+                <div className="flex-1 text-left">
+                  <p className="text-white font-semibold text-sm">
+                    Dr. {user.mainDoctor.firstName} {user.mainDoctor.lastName}
+                  </p>
+                  <p className="text-blue-400 text-xs">{user.mainDoctor.speciality}</p>
+                </div>
+              </button>
+            ) : (
+              <p className="text-gray-400 text-sm text-center py-4">Aucun médecin traitant</p>
+            )}
           </div>
-          <div className="space-y-3">
-            <div>
-              <span className="text-gray-400 text-xs">Connexion</span>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-green-400 text-sm">●</span>
-                <p className="text-white text-sm">Email / Mot de passe</p>
-              </div>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-gray-400 text-sm">●</span>
-                <p className="text-white text-sm">Numéro de téléphone</p>
-              </div>
+
+          {/* Connexion et paiement */}
+          <div className="border-t border-gray-700 pt-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-white">
+                Connexion et paiement
+              </h2>
+              <button className="text-sm text-blue-400 hover:text-blue-300 transition duration-200 cursor-pointer">
+                Modifier
+              </button>
             </div>
-            <div>
-              <span className="text-gray-400 text-xs">Carte bancaire</span>
-              <div className="flex items-center gap-2 mt-1">
-                <p className="text-white text-sm">
-                  CardHolder FullName{" "}
-                  <span className="bg-blue-800 rounded-xl p-1 text-white">
-                    •••• •••• •••• 4582
-                  </span>
-                </p>
-                <span className="text-gray-500 text-xs">Visa</span>
+            <div className="space-y-3">
+              <div>
+                <span className="text-gray-400 text-xs">Connexion</span>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-green-400 text-sm">●</span>
+                  <p className="text-white text-sm">Email / Mot de passe</p>
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-gray-400 text-sm">●</span>
+                  <p className="text-white text-sm">Numéro de téléphone</p>
+                </div>
+              </div>
+              <div>
+                <span className="text-gray-400 text-xs">Carte bancaire</span>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-white text-sm">
+                    CardHolder FullName{" "}
+                    <span className="bg-blue-800 rounded-xl p-1 text-white">
+                      •••• •••• •••• 4582
+                    </span>
+                  </p>
+                  <span className="text-gray-500 text-xs">Visa</span>
+                </div>
               </div>
             </div>
           </div>
@@ -351,7 +471,7 @@ function Profile() {
         </div>
       </div>
 
-      {/* Second Row - Appointment History */}
+      {/* Appointment History */}
       <div className="bg-gray-800 rounded-lg p-6">
         <h2 className="text-xl font-semibold text-white mb-4">
           Historique des rendez-vous

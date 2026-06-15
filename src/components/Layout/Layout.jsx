@@ -1,6 +1,6 @@
-import Header from "../Header";
-import Footer from "../Footer";
-import CGUBanner from "../CGUBanner";
+import Header from "./Header";
+import Footer from "./Footer";
+import CGUBanner from "./CGUBanner";
 
 function Layout({ children }) {
   return (

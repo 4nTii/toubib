@@ -212,17 +212,18 @@ function Appointments() {
     return apptDate > today;
   };
 
-  // Future appointments (scheduled, confirmed, pending, or canceled with future date)
+  // Future appointments (with future date: scheduled, confirmed, pending, or canceled)
   const upcoming = appointments.filter((a) => {
-    if (["scheduled", "confirmed", "pending"].includes(a.status)) return true;
-    if (a.status === "canceled" && isFutureDate(a.dateIso || a.date)) return true;
+    const isFuture = isFutureDate(a.dateIso || a.date);
+    if (isFuture && ["scheduled", "confirmed", "pending", "canceled"].includes(a.status)) return true;
     return false;
   });
 
-  // Past appointments (completed, or canceled with past date)
+  // Past appointments (with past date: scheduled, confirmed, pending, canceled, or completed)
   const past = appointments.filter((a) => {
+    const isFuture = isFutureDate(a.dateIso || a.date);
+    if (!isFuture && ["scheduled", "confirmed", "pending", "canceled"].includes(a.status)) return true;
     if (a.status === "completed") return true;
-    if (a.status === "canceled" && !isFutureDate(a.dateIso || a.date)) return true;
     return false;
   });
 

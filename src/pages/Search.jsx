@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { searchResults } from "../services/searchService";
 import { FTP_TARGET } from "../config/config";
-import { LocationIcon } from "../services/IconService";
+import { LocationIcon } from "../components/icons/IconService";
 import Layout from "../components/Layout/Layout";
 
 const DEFAULT_AVATARS = {
