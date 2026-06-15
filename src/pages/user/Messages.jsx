@@ -126,7 +126,7 @@ function Messages() {
           /* Side by side layout when messages exist */
           <div className="flex h-[calc(100%-48px)]">
             {/* Messages List - Left Panel */}
-            <div className="w-2/5 border-r border-gray-700 overflow-y-auto">
+            <div className={`${selectedMessage ? "hidden md:w-2/5 md:block" : "w-full md:w-2/5"} border-r border-gray-700 overflow-y-auto`}>
               {messages.map((message) => (
                 <div
                   key={message.id}
@@ -181,13 +181,31 @@ function Messages() {
             </div>
 
             {/* Selected Message - Right Panel */}
-            <div className="w-3/5 overflow-y-auto bg-gray-850">
+            <div className={`${selectedMessage ? "w-full md:w-3/5" : "hidden md:w-3/5 md:flex"} overflow-y-auto bg-gray-850`}>
               {selectedMessage ? (
-                <div className="h-full flex flex-col">
+                <div className="h-full flex flex-col w-full">
                   {/* Message Header */}
                   <div className="px-6 py-4 border-b border-gray-700 bg-gray-800">
-                    <div className="flex justify-between items-start">
-                      <div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setSelectedMessage(null)}
+                        className="md:hidden text-gray-400 hover:text-white transition flex items-center justify-center flex-shrink-0 w-6 h-6"
+                      >
+                        <svg
+                          className="h-5 w-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 19l-7-7 7-7"
+                          />
+                        </svg>
+                      </button>
+                      <div className="flex-1">
                         <h2 className="text-lg font-bold text-white">
                           {selectedMessage.subject}
                         </h2>
@@ -203,7 +221,7 @@ function Messages() {
                       </div>
                       <button
                         onClick={() => setSelectedMessage(null)}
-                        className="text-gray-400 hover:text-white transition p-1"
+                        className="hidden md:block text-gray-400 hover:text-white transition p-1"
                       >
                         <svg
                           className="h-5 w-5"

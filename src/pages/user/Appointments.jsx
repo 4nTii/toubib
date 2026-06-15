@@ -20,20 +20,20 @@ function StatusBadge({ status, appointmentDate }) {
     const computed = getAppointmentStatusLabel(appointmentDate);
     if (computed === "Passé") {
       return (
-        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_MAP.completed.classes}`}>
+        <span className={`text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap text-center ${STATUS_MAP.completed.classes}`} style={{ minWidth: "75px" }}>
           Passé
         </span>
       );
     }
     return (
-      <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusInfo.classes}`}>
+      <span className={`text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap text-center ${statusInfo.classes}`} style={{ minWidth: "75px" }}>
         {computed}
       </span>
     );
   }
 
   return (
-    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusInfo.classes}`}>
+    <span className={`text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap text-center ${statusInfo.classes}`} style={{ minWidth: "75px" }}>
       {statusInfo.label}
     </span>
   );
