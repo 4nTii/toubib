@@ -60,7 +60,11 @@ function Profile() {
         today.setHours(0, 0, 0, 0);
 
         const pastAppointments = allAppointments.filter(appointment => {
-          const appointmentDate = new Date(appointment.appointmentDate);
+          // Use dateIso if available, otherwise use date
+          const dateStr = appointment.dateIso || appointment.date;
+          if (!dateStr) return false;
+
+          const appointmentDate = new Date(dateStr);
           appointmentDate.setHours(0, 0, 0, 0);
           return appointmentDate < today;
         });
@@ -362,10 +366,11 @@ function Profile() {
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-gray-700">
+                    <th className="w-16 px-2 py-3 hidden sm:table-cell"></th>
                     <th className="px-4 py-3 text-gray-400 font-medium">Date</th>
                     <th className="px-4 py-3 text-gray-400 font-medium">Patient</th>
                     <th className="px-4 py-3 text-gray-400 font-medium">Docteur</th>
-                    <th className="px-4 py-3 text-gray-400 font-medium text-right">Action</th>
+                    <th className="px-4 py-3"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -374,22 +379,29 @@ function Profile() {
                       key={appointment.id}
                       className="border-b border-gray-700 hover:bg-gray-700 transition duration-200"
                     >
+                      <td className="w-16 px-2 py-3 hidden sm:table-cell">
+                        {appointment.status === 'canceled' && (
+                          <span className="bg-red-600 text-white text-xs font-medium px-2 py-1 rounded whitespace-nowrap">
+                            Annulé
+                          </span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-white">
-                        <span className="md:hidden">{appointment.dateIso}</span>
+                        <span className="md:hidden">{DateUtils.formatDateDDMMYYYY(appointment.dateIso || appointment.date)}</span>
                         <span className="hidden md:inline">{appointment.date}</span>
                       </td>
                       <td className="px-4 py-3 text-white text-sm">
                         {user?.firstName} {user?.lastName}
                       </td>
                       <td className="px-4 py-3 text-white text-sm">
-                        Dr. {appointment.doctorFirstName} {appointment.doctorLastName} ({appointment.businessSiteAddress?.split(',').pop()?.trim() || 'N/A'})
+                        Dr. {appointment.doctorFirstName} {appointment.doctorLastName} <span className="hidden lg:inline">({appointment.businessSiteAddress?.split(',').pop()?.trim() || 'N/A'})</span>
                       </td>
                       <td className="px-4 py-3 text-right">
                         <button
                           onClick={() => alert('Fonctionnalité à venir')}
-                          className="bg-blue-600 hover:bg-blue-700 text-white rounded text-xs px-3 py-1 transition duration-200"
+                          className="bg-blue-600 hover:bg-blue-700 text-white rounded text-xs px-3 py-1 transition duration-200 cursor-pointer"
                         >
-                          Document
+                          Documents
                         </button>
                       </td>
                     </tr>

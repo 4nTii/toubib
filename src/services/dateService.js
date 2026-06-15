@@ -217,6 +217,24 @@ const DateUtils = {
     // Format date
     return date.toLocaleDateString(locale, options);
   },
+
+  /**
+   * Format a date as "dd-mm-yyyy" (e.g., "15-03-2024")
+   * @param {Date|string} inputDate - Date object or date string
+   * @returns {string} Formatted date string or empty string if invalid
+   */
+  formatDateDDMMYYYY(inputDate) {
+    // Convert string to Date if necessary
+    let date =
+      inputDate instanceof Date ? inputDate : this.parseDate(inputDate);
+    if (!date || isNaN(date.getTime())) return "";
+
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear();
+
+    return `${day}-${month}-${year}`;
+  },
 };
 
 // Export as default
