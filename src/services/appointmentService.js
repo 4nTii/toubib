@@ -8,9 +8,10 @@ import { offsetDate } from "./dateService";
  * @param {string} startDate - ISO datetime string (YYYY-MM-DDTHH:mm:ss)
  * @param {string} endDate   - ISO datetime string (YYYY-MM-DDTHH:mm:ss)
  * @param {string} [notes]   - optional consultation reason
+ * @param {number|string} [businessSiteId] - optional business site id
  * @returns {Promise<{success: boolean, data?: object, error?: string}>}
  */
-export async function bookAppointment(doctorId, userId, startDate, endDate, notes) {
+export async function bookAppointment(doctorId, userId, startDate, endDate, notes, businessSiteId) {
   try {
     const response = await fetch(`${API_URL}/doctor/${doctorId}/set-appointment`, {
       method: "POST",
@@ -19,7 +20,13 @@ export async function bookAppointment(doctorId, userId, startDate, endDate, note
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify({ idUser: userId, startDate, endDate, ...(notes ? { notes } : {}) }),
+      body: JSON.stringify({
+        idUser: userId,
+        startDate,
+        endDate,
+        ...(notes ? { notes } : {}),
+        ...(businessSiteId ? { businessSiteId } : {})
+      }),
     });
 
     const result = await response.json();
@@ -39,21 +46,24 @@ export async function bookAppointment(doctorId, userId, startDate, endDate, note
  * @param {number|string} doctorId
  * @param {string} startDate - YYYY-MM-DD (defaults to today)
  * @param {string} endDate   - YYYY-MM-DD (defaults to today + 6 days)
+ * @param {number|string} [businessSiteId] - optional business site id
  * @returns {Promise<{success: boolean, data?: object, error?: string}>}
  */
-export async function getAvailableSlots(doctorId, startDate, endDate) {
+export async function getAvailableSlots(doctorId, startDate, endDate, businessSiteId) {
   const start = startDate ?? offsetDate(0);
   const end = endDate ?? offsetDate(6);
 
+  let url = `${API_URL}/doctor/${doctorId}/get-appointment/start/${start}/end/${end}`;
+  if (businessSiteId) {
+    url += `?businessSiteId=${businessSiteId}`;
+  }
+
   try {
-    const response = await fetch(
-      `${API_URL}/doctor/${doctorId}/get-appointment/start/${start}/end/${end}`,
-      {
-        method: "GET",
-        credentials: "include",
-        headers: { Accept: "application/json" },
-      },
-    );
+    const response = await fetch(url, {
+      method: "GET",
+      credentials: "include",
+      headers: { Accept: "application/json" },
+    });
 
     if (!response.ok) {
       return {

@@ -28,6 +28,9 @@ function Appointment() {
   const [doctor, setDoctor] = useState(null);
   const [doctorLoading, setDoctorLoading] = useState(true);
 
+  // Business site selection
+  const [selectedBusinessSite, setSelectedBusinessSite] = useState(null);
+
   // Slots
   const [slots, setSlots] = useState({});
   const [slotsLoading, setSlotsLoading] = useState(true);
@@ -60,19 +63,24 @@ function Appointment() {
       setDoctorLoading(true);
       const result = await getDoctorById(id);
       if (result.success) {
-        setDoctor(result.data.doctor);
+        const fetchedDoctor = result.data.doctor;
+        setDoctor(fetchedDoctor);
+        // Set default business site (primary or first)
+        const primarySite = fetchedDoctor.doctorBusinessSites?.find((dbs) => dbs.isPrimary) ??
+                           fetchedDoctor.doctorBusinessSites?.[0];
+        setSelectedBusinessSite(primarySite);
       }
       setDoctorLoading(false);
     }
     fetchDoctor();
   }, [id]);
 
-  /* ── Fetch available slots whenever date range changes ──────── */
+  /* ── Fetch available slots whenever date range or business site changes ──────── */
   useEffect(() => {
     async function fetchSlots() {
       setSlotsLoading(true);
       setSlotsError(null);
-      const result = await getAvailableSlots(id, startDate, endDate);
+      const result = await getAvailableSlots(id, startDate, endDate, selectedBusinessSite?.businessSite?.id);
       if (result.success) {
         setSlots(result.data.availableSlots ?? {});
       } else {
@@ -82,7 +90,7 @@ function Appointment() {
       setSlotsLoading(false);
     }
     fetchSlots();
-  }, [id, startDate, endDate]);
+  }, [id, startDate, endDate, selectedBusinessSite]);
 
   /* ── Scroll vers la confirmation quand un slot est pré-sélectionné ── */
   useEffect(() => {
@@ -113,7 +121,14 @@ function Appointment() {
     const startDateTime = `${selectedDate}T${selectedSlot.start}:00`;
     const endDateTime = `${selectedDate}T${selectedSlot.end}:00`;
 
-    const result = await bookAppointment(id, user.id, startDateTime, endDateTime, reason || undefined);
+    const result = await bookAppointment(
+      id,
+      user.id,
+      startDateTime,
+      endDateTime,
+      reason || undefined,
+      selectedBusinessSite?.businessSite?.id
+    );
 
     if (result.success) {
       setBookingSuccess(true);
@@ -181,10 +196,6 @@ function Appointment() {
     );
   }
 
-  const primarySite =
-    doctor.doctorBusinessSites?.find((dbs) => dbs.isPrimary) ??
-    doctor.doctorBusinessSites?.[0];
-
   return (
     <Layout>
       <div className="max-w-4xl mx-auto pb-24 space-y-6">
@@ -226,10 +237,10 @@ function Appointment() {
             {doctor.speciality?.name && (
               <p className="text-blue-400 text-sm">{doctor.speciality.name}</p>
             )}
-            {primarySite?.businessSite && (
+            {selectedBusinessSite?.businessSite && (
               <p className="text-gray-400 text-sm mt-0.5">
-                {primarySite.businessSite.name} —{" "}
-                {primarySite.businessSite.ville}
+                {selectedBusinessSite.businessSite.name} —{" "}
+                {selectedBusinessSite.businessSite.ville}
               </p>
             )}
           </div>
@@ -513,7 +524,7 @@ function Appointment() {
           {/* ── Right : doctor contact info ─────────────────────────── */}
           <div className="space-y-5 lg:sticky lg:top-6 self-start">
             {/* Contact */}
-            {primarySite?.businessSite && (
+            {selectedBusinessSite?.businessSite && (
               <section className="bg-gray-800 rounded-xl p-5">
                 <h2 className="text-base font-semibold text-white mb-3 flex items-center gap-2">
                   <svg
@@ -531,41 +542,67 @@ function Appointment() {
                   </svg>
                   Cabinet
                 </h2>
+
+                {/* Business site dropdown */}
+                {doctor?.doctorBusinessSites && doctor.doctorBusinessSites.length > 1 && (
+                  <div className="mb-4">
+                    <label className="block text-gray-400 text-xs mb-1.5">
+                      Sélectionner un établissement
+                    </label>
+                    <select
+                      value={selectedBusinessSite?.id ?? ""}
+                      onChange={(e) => {
+                        const selected = doctor.doctorBusinessSites.find(
+                          (dbs) => dbs.id === Number(e.target.value)
+                        );
+                        setSelectedBusinessSite(selected);
+                      }}
+                      className="w-full bg-gray-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 transition cursor-pointer"
+                    >
+                      {doctor.doctorBusinessSites.map((dbs) => (
+                        <option key={dbs.id} value={dbs.id}>
+                          Cabinet {dbs.businessSite.ville}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <p className="text-gray-200 text-sm font-medium">
-                  {primarySite.businessSite.name}
+                  {selectedBusinessSite.businessSite.name}
                 </p>
                 <p className="text-gray-400 text-sm mt-0.5">
-                  {primarySite.businessSite.address},{" "}
-                  {primarySite.businessSite.ville}
+                  {selectedBusinessSite.businessSite.address},{" "}
+                  {selectedBusinessSite.businessSite.ville}
                 </p>
-                {primarySite.businessSite.region && (
+                {selectedBusinessSite.businessSite.region && (
                   <p className="text-gray-500 text-sm">
-                    {primarySite.businessSite.region.name}
+                    {selectedBusinessSite.businessSite.region.name}
                   </p>
                 )}
                 <dl className="mt-3 space-y-1.5 text-sm border-t border-gray-700 pt-3">
-                  {primarySite.businessSite.phone && (
+                  {selectedBusinessSite.businessSite.phone && (
                     <div className="flex justify-between gap-2">
                       <dt className="text-gray-500">Tél.</dt>
                       <dd>
                         <a
-                          href={`tel:${primarySite.businessSite.phone}`}
+                          href={`tel:${selectedBusinessSite.businessSite.phone}`}
                           className="text-gray-200 hover:text-white transition"
                         >
-                          {primarySite.businessSite.phone}
+                          {selectedBusinessSite.businessSite.phone}
                         </a>
                       </dd>
                     </div>
                   )}
-                  {primarySite.businessSite.email && (
+                  {selectedBusinessSite.businessSite.email && (
                     <div className="flex justify-between gap-2">
                       <dt className="text-gray-500">Email</dt>
                       <dd>
                         <a
-                          href={`mailto:${primarySite.businessSite.email}`}
+                          href={`mailto:${selectedBusinessSite.businessSite.email}`}
                           className="text-gray-200 hover:text-white transition break-all"
                         >
-                          {primarySite.businessSite.email}
+                          {selectedBusinessSite.businessSite.email}
                         </a>
                       </dd>
                     </div>
