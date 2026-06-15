@@ -48,6 +48,9 @@ function SearchBar({ variant = "header", initialSearch = "", initialLocation = "
   const searchTimeoutRef = useRef(null);
   const locationTimeoutRef = useRef(null);
 
+  // Modal state for mobile
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   // Click outside handler
   useEffect(() => {
     function handleClickOutside(event) {
@@ -328,6 +331,104 @@ function SearchBar({ variant = "header", initialSearch = "", initialLocation = "
     return sections;
   };
 
+  // On mobile < 576px, show only search button
+  if (isCompact) {
+    return (
+      <>
+        <div className="sm:hidden w-full flex justify-center">
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="bg-green-600 hover:bg-green-800 text-white font-medium transition cursor-pointer flex items-center justify-center gap-2 rounded-lg px-6 py-3 w-full max-w-sm"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <span>Rechercher</span>
+          </button>
+        </div>
+
+        {isModalOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-50 flex items-end"
+            onClick={() => setIsModalOpen(false)}
+          >
+            <form
+              onSubmit={(e) => {
+                handleSubmit(e);
+                setIsModalOpen(false);
+              }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full bg-gray-800 rounded-t-2xl p-6 space-y-3"
+            >
+              {/* Search Field */}
+              <div className="relative" ref={searchRef}>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  onFocus={() => setIsSearchFocused(true)}
+                  placeholder="Nom, spécialité, établissement"
+                  className="w-full bg-gray-700 text-white placeholder-gray-400 px-4 py-3 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-600 rounded-lg"
+                />
+                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2" />
+
+                {isSearchFocused && (hasSearched || isLoadingSearch) && (
+                  <div className="absolute bottom-full left-0 right-0 mb-1 bg-gray-700 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto sm:top-full sm:bottom-auto sm:mt-1 sm:mb-0">
+                    {isLoadingSearch ? (
+                      <div className="px-4 py-3 text-gray-400 text-sm">Recherche...</div>
+                    ) : !hasResults() ? (
+                      <div className="px-4 py-3 text-gray-400 text-sm">Aucun résultat trouvé</div>
+                    ) : (
+                      renderSearchResults()
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Location Field */}
+              <div className="relative" ref={locationRef}>
+                <input
+                  type="text"
+                  value={locationQuery}
+                  onChange={handleLocationChange}
+                  onFocus={() => setIsLocationFocused(true)}
+                  placeholder="Où ?"
+                  className="w-full bg-gray-700 text-white placeholder-gray-400 px-4 py-3 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-600 rounded-lg"
+                />
+                <LocationPinIcon className="absolute left-3 top-1/2 transform -translate-y-1/2" />
+
+                {isLocationFocused && (hasSearchedLocation || isLoadingLocation) && (
+                  <div className="absolute bottom-full left-0 right-0 mb-1 bg-gray-700 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto sm:top-full sm:bottom-auto sm:mt-1 sm:mb-0">
+                    {isLoadingLocation ? (
+                      <div className="px-4 py-3 text-gray-400 text-sm">Recherche...</div>
+                    ) : !hasLocationResults() ? (
+                      <div className="px-4 py-3 text-gray-400 text-sm">Aucun résultat trouvé</div>
+                    ) : (
+                      renderLocationResults()
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Search Button */}
+              <button
+                type="submit"
+                className="w-full bg-green-600 hover:bg-green-800 text-white font-medium transition cursor-pointer flex items-center justify-center gap-2 rounded-lg px-4 py-3"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                Rechercher
+              </button>
+            </form>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  // Tablet/Desktop version (sm and up)
   return (
     <form
       onSubmit={handleSubmit}
@@ -364,7 +465,7 @@ function SearchBar({ variant = "header", initialSearch = "", initialLocation = "
 
       {/* Location Field */}
       <div
-        className={`relative ${isCompact ? "w-58" : "w-66"}`}
+        className={`relative ${isCompact ? "flex-1 sm:w-48 lg:w-58" : "flex-1 lg:w-66"}`}
         ref={locationRef}
       >
         <input
@@ -412,7 +513,7 @@ function SearchBar({ variant = "header", initialSearch = "", initialLocation = "
             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
           />
         </svg>
-        <span className={isCompact ? "hidden sm:inline" : ""}>Rechercher</span>
+        <span className={isCompact ? "hidden min-[1200px]:inline" : ""}>Rechercher</span>
       </button>
     </form>
   );

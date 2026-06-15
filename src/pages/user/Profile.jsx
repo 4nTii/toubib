@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import Layout from "../../components/Layout/Layout";
 import { VerifiedIcon } from "../../components/UiHTML/VerifiedIcon";
 import DateUtils from "../../services/dateService";
 import { updateUserProfile } from "../../services/authService";
+import { getUserAppointments } from "../../services/userAppointmentsService";
 
 function Profile() {
   const { user, fetchUserInfo } = useAuth();
@@ -40,45 +41,20 @@ function Profile() {
     },
   ];
 
-  // Mock appointment data
-  const appointments = [
-    {
-      id: 1,
-      date: "15/03/2026 - 10:30",
-      patient: "Marie Dupont",
-      docteur: "Dr. Marie Dupont",
-      speciality: "Pédiatrie",
-      adresse: "12 Rue de la Santé, 75014 Paris",
-      detail: "Bilan annuel",
-    },
-    {
-      id: 2,
-      date: "02/02/2026 - 14:00",
-      patient: "Moi",
-      docteur: "Dr. Jean Martin",
-      speciality: "Cardiologie",
-      adresse: "45 Avenue des Champs, 75008 Paris",
-      detail: "Contrôle tension",
-    },
-    {
-      id: 3,
-      date: "18/01/2026 - 09:15",
-      patient: "Lucas Dupont",
-      docteur: "Dr. Sophie Bernard",
-      speciality: "Ophtalmologie",
-      adresse: "8 Boulevard Haussmann, 75009 Paris",
-      detail: "Examen cutané",
-    },
-    {
-      id: 4,
-      date: "05/12/2025 - 16:45",
-      patient: "Moi",
-      docteur: "Dr. Pierre Lefebvre",
-      speciality: "Orthopédie",
-      adresse: "23 Rue du Commerce, 75015 Paris",
-      detail: "Rappel vaccin grippe",
-    },
-  ];
+  const [appointments, setAppointments] = useState([]);
+  const [appointmentsLoading, setAppointmentsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchAppointments() {
+      setAppointmentsLoading(true);
+      const result = await getUserAppointments();
+      if (result.success) {
+        setAppointments(result.data || []);
+      }
+      setAppointmentsLoading(false);
+    }
+    fetchAppointments();
+  }, []);
 
   const handleProfileEditClick = () => {
     setFormData({
@@ -355,41 +331,42 @@ function Profile() {
         <h2 className="text-xl font-semibold text-white mb-4">
           Historique des rendez-vous
         </h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-gray-700">
-                <th className="px-4 py-3 text-gray-400 font-medium">Date</th>
-                <th className="px-4 py-3 text-gray-400 font-medium">Patient</th>
-                <th className="px-4 py-3 text-gray-400 font-medium">Docteur</th>
-                <th className="px-4 py-3 text-gray-400 font-medium">Adresse</th>
-                <th className="px-4 py-3 text-gray-400 font-medium">Détail</th>
-              </tr>
-            </thead>
-            <tbody>
-              {appointments.map((appointment) => (
-                <tr
-                  key={appointment.id}
-                  className="border-b border-gray-700 hover:bg-gray-700 transition duration-200"
-                >
-                  <td className="px-4 py-3 text-white">{appointment.date}</td>
-                  <td className="px-4 py-3 text-white">
-                    {appointment.patient}
-                  </td>
-                  <td className="px-4 py-3 text-white">
-                    {appointment.docteur} - {appointment.speciality}
-                  </td>
-                  <td className="px-4 py-3 text-gray-300">
-                    {appointment.adresse}
-                  </td>
-                  <td className="px-4 py-3 text-gray-300">
-                    {appointment.detail}
-                  </td>
+        {appointmentsLoading ? (
+          <div className="text-center py-8 text-gray-400">Chargement...</div>
+        ) : appointments.length === 0 ? (
+          <div className="text-center py-8 text-gray-400">Aucun rendez-vous</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-gray-700">
+                  <th className="px-4 py-3 text-gray-400 font-medium">Date</th>
+                  <th className="px-4 py-3 text-gray-400 font-medium">Patient</th>
+                  <th className="px-4 py-3 text-gray-400 font-medium">Docteur</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {appointments.map((appointment) => (
+                  <tr
+                    key={appointment.id}
+                    className="border-b border-gray-700 hover:bg-gray-700 transition duration-200"
+                  >
+                    <td className="px-4 py-3 text-white">
+                      <span className="md:hidden">{appointment.dateIso}</span>
+                      <span className="hidden md:inline">{appointment.date}</span>
+                    </td>
+                    <td className="px-4 py-3 text-white text-sm">
+                      {user?.firstName} {user?.lastName}
+                    </td>
+                    <td className="px-4 py-3 text-white text-sm">
+                      Dr. {appointment.doctorFirstName} {appointment.doctorLastName} ({appointment.businessSiteAddress?.split(',').pop()?.trim() || 'N/A'})
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </Layout>
   );

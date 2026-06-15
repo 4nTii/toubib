@@ -4,8 +4,11 @@ import { useAuth } from "../context/AuthContext";
 import { APP_NAME } from "../config/config";
 import CGUBanner from "../components/CGUBanner";
 import SearchBar from "../components/SearchBar";
+import BlindColorToggle from "../components/BlindColorToggle";
 
 import logo from "../assets/images/app/toubib-logo-w500.webp";
+
+const logoSmall = "/images/app/toubib-logo-small.webp";
 
 function Index() {
   const { isAuthenticated, logout, user, fetchUserInfo } = useAuth();
@@ -54,10 +57,14 @@ function Index() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             {/* Logo */}
-            <Link to="/" className="flex items-center">
-              <img src={logo} alt={APP_NAME} className="h-10 w-auto" />
+            <Link to="/" className="flex items-center shrink-0">
+              <img src={logo} alt={APP_NAME} className="h-10 w-auto hidden min-[1200px]:block" />
+              <img src={logoSmall} alt={APP_NAME} className="h-10 w-auto min-[1200px]:hidden" />
             </Link>
             <div className="flex items-center gap-4">
+              <div className="hidden lg:block">
+                <BlindColorToggle />
+              </div>
               {isAuthenticated ? (
                 <div className="relative" ref={dropdownRef}>
                   <button
@@ -66,9 +73,10 @@ function Index() {
                   >
                     {/* Avatar */}
                     <div
-                      className={`avatar-user-${user?.gender || "male"} w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm`}
+                      className={`avatar-user-${user?.gender || "male"} w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm shrink-0`}
+                      style={{ backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}
                     ></div>
-                    <span className="text-white">Bonjour {userName}</span>
+                    <span className="text-white hidden min-[1200px]:inline">Bonjour {userName}</span>
                     <svg
                       className={`h-4 w-4 text-white transition-transform duration-200 ${
                         isDropdownOpen ? "rotate-180" : ""
@@ -88,6 +96,10 @@ function Index() {
 
                   {isDropdownOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-gray-700 rounded-lg shadow-lg py-1 z-50">
+                      <div className="block lg:hidden px-4 py-2">
+                        <BlindColorToggle />
+                      </div>
+                      <hr className="my-1 border-gray-600 block lg:hidden" />
                       <Link
                         to="/messages"
                         className="block px-4 py-2 text-gray-200 hover:bg-gray-600 transition duration-200"

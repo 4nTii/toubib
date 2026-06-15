@@ -111,13 +111,14 @@ function Doctor() {
   const workingDays = parseWorkingSchedule(primarySite?.workingSchedule);
 
   return (
-    <Layout>
-      <div className="max-w-5xl mx-auto pb-24 space-y-6">
+    <>
+      <Layout>
+        <div className="max-w-5xl mx-auto pb-24 space-y-6">
         {/* ── Hero card ───────────────────────────────────────────── */}
         <div className="bg-gray-800 rounded-xl p-6">
-          <div className="flex flex-col md:flex-row gap-6">
+          <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
             {/* Avatar */}
-            <div className="relative shrink-0 self-start">
+            <div className="relative shrink-0">
               <img
                 src={getProfileImage()}
                 alt={`Dr. ${doctor.user?.firstName} ${doctor.user?.lastName}`}
@@ -153,7 +154,7 @@ function Doctor() {
             </div>
 
             {/* Main info */}
-            <div className="flex-1 pt-2">
+            <div className="flex-1 pt-2 text-center md:text-left">
               <h1 className="text-2xl font-bold text-white">
                 Dr. {doctor.user?.firstName} {doctor.user?.lastName}
               </h1>
@@ -432,7 +433,7 @@ function Doctor() {
             {doctor.isActive && (
               <button
                 onClick={() => navigate(`/doctor/${id}/appointment`)}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow transition duration-200 cursor-pointer"
+                className="hidden md:block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow transition duration-200 cursor-pointer"
               >
                 Prendre rendez-vous
               </button>
@@ -533,8 +534,19 @@ function Doctor() {
             </div>
           </div>
         </div>
-      </div>
-    </Layout>
+        </div>
+      </Layout>
+
+      {/* Fixed appointment button for mobile */}
+      {doctor?.isActive && (
+        <button
+          onClick={() => navigate(`/doctor/${id}/appointment`)}
+          className="md:hidden fixed bottom-0 left-0 right-0 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-4 shadow-lg transition duration-200 cursor-pointer"
+        >
+          Prendre rendez-vous
+        </button>
+      )}
+    </>
   );
 }
 
