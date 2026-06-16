@@ -42,6 +42,7 @@ export async function getUserInfo() {
       biography: userData.biography,
       socialNumber: userData.socialNumber || null,
       mainDoctor: userData.mainDoctor || null,
+      userCard: userData.userCard || null,
       dateInscription: userData.dateInscription,
       lastLogin: userData.lastLogin ? new Date(userData.lastLogin) : null,
       isActive: userData.isActive,
@@ -190,6 +191,87 @@ export async function updateUserProfile(fields) {
     return {
       success: false,
       error: "Erreur lors de la mise à jour du profil",
+    };
+  }
+}
+
+/**
+ * Change user password (uses HttpOnly cookie for auth)
+ * @param {string} oldPassword - Current password
+ * @param {string} newPassword - New password
+ * @returns {Promise<{success: boolean, message?: string, error?: string}>}
+ */
+export async function changePassword(oldPassword, newPassword) {
+  try {
+    const response = await fetch(`${API_URL}/users/me/change-password`, {
+      method: "PATCH",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ oldPassword, newPassword }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      return {
+        success: true,
+        message: data.message || "Mot de passe mis à jour avec succès",
+      };
+    } else {
+      if (response.status === 401) {
+        return { success: false, error: "L'ancien mot de passe est incorrect" };
+      }
+      return {
+        success: false,
+        error: data.message || "Erreur lors de la modification du mot de passe",
+      };
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: "Erreur lors de la modification du mot de passe",
+    };
+  }
+}
+
+/**
+ * Add or update user card (uses HttpOnly cookie for auth)
+ * @param {object} cardData - Card data (card_holder, card_number, expire_date, card_cvv)
+ * @returns {Promise<{success: boolean, message?: string, error?: string, data?: object}>}
+ */
+export async function addOrUpdateCard(cardData) {
+  try {
+    const response = await fetch(`${API_URL}/users/me/card`, {
+      method: "PATCH",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(cardData),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      return {
+        success: true,
+        message: data.message || "Carte bancaire ajoutée avec succès",
+        data: data.data,
+      };
+    } else {
+      return {
+        success: false,
+        error: data.message || "Erreur lors de l'ajout de la carte bancaire",
+      };
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: "Erreur lors de l'ajout de la carte bancaire",
     };
   }
 }

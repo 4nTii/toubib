@@ -4,9 +4,10 @@ import { useAuth } from "../../context/AuthContext";
 import Layout from "../../components/Layout/Layout";
 import { VerifiedIcon } from "../../components/UiHTML/VerifiedIcon";
 import DateUtils from "../../services/dateService";
-import { updateUserProfile } from "../../services/authService";
+import { updateUserProfile, changePassword, addOrUpdateCard } from "../../services/authService";
 import { getUserAppointments } from "../../services/userAppointmentsService";
 import { FTP_TARGET } from "../../config/config";
+import { CreditCardVisa } from "../../components/icons/IconService";
 
 // Format social security number: 1 23 45 67 890 123 123
 const formatSocialNumber = (number) => {
@@ -37,6 +38,21 @@ function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState(null);
+  const [isEditingPassword, setIsEditingPassword] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [cardMessage, setCardMessage] = useState(null);
+  const [cardError, setCardError] = useState("");
+  const [cardInfo, setCardInfo] = useState(null);
+  const [showNewCardForm, setShowNewCardForm] = useState(false);
+  const [newCardData, setNewCardData] = useState({
+    card_holder: "",
+    card_number: "",
+    expire_date: "",
+    card_cvv: "",
+  });
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -75,6 +91,20 @@ function Profile() {
   const [showAllAppointments, setShowAllAppointments] = useState(false);
   const ITEMS_PER_PAGE = 5;
   const INITIAL_ITEMS = 3;
+
+  useEffect(() => {
+    if (user?.userCard) {
+      const lastDigits = user.userCard.cardNumber?.slice(-4) || "";
+      setCardInfo({
+        holder: user.userCard.cardHolder,
+        lastDigits: lastDigits,
+        type: "Visa",
+      });
+    } else {
+      setCardInfo(null);
+      setShowNewCardForm(false);
+    }
+  }, [user?.userCard]);
 
   useEffect(() => {
     async function fetchAppointments() {
@@ -189,6 +219,145 @@ function Profile() {
       setTimeout(() => setSaveMessage(null), 3000);
     }
 
+    setIsSaving(false);
+  };
+
+  const validatePasswordStrength = (password) => {
+    const errors = [];
+    if (password.length < 8) errors.push("au moins 8 caractères");
+    if (!/[A-Z]/.test(password)) errors.push("une majuscule");
+    if (!/[a-z]/.test(password)) errors.push("une minuscule");
+    if (!/[0-9]/.test(password)) errors.push("un chiffre");
+    if (!/[!@#$%^&*()_+\-=\[\]{};:'".,<>?\/\\|`~]/.test(password)) errors.push("un caractère spécial");
+    return errors;
+  };
+
+  const isPasswordStrong = (password) => {
+    return validatePasswordStrength(password).length === 0;
+  };
+
+  const handlePasswordSave = async () => {
+    setPasswordError("");
+
+    if (!oldPassword) {
+      setPasswordError("L'ancien mot de passe est requis");
+      return;
+    }
+    if (!newPassword) {
+      setPasswordError("Le nouveau mot de passe est requis");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError("Les nouveaux mots de passe ne correspondent pas");
+      return;
+    }
+    if (!isPasswordStrong(newPassword)) {
+      const errors = validatePasswordStrength(newPassword);
+      setPasswordError("Le mot de passe doit contenir: " + errors.join(", "));
+      return;
+    }
+
+    setIsSaving(true);
+    const result = await changePassword(oldPassword, newPassword);
+    if (result.success) {
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setIsEditingPassword(false);
+      setSaveMessage({ type: "success", text: "Mot de passe mis à jour avec succès" });
+      setTimeout(() => setSaveMessage(null), 3000);
+    } else {
+      setPasswordError(result.error || "Erreur lors de la mise à jour du mot de passe");
+    }
+    setIsSaving(false);
+  };
+
+  const formatCardNumber = (value) => {
+    const cleaned = value.replace(/\D/g, "").slice(0, 16);
+    const parts = [];
+    for (let i = 0; i < cleaned.length; i += 4) {
+      parts.push(cleaned.substring(i, i + 4));
+    }
+    return parts.join(" ");
+  };
+
+  const formatExpiryDate = (value) => {
+    const cleaned = value.replace(/\D/g, "").slice(0, 4);
+    if (cleaned.length >= 2) {
+      return `${cleaned.slice(0, 2)}/${cleaned.slice(2)}`;
+    }
+    return cleaned;
+  };
+
+  const handleDeleteCard = () => {
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer cette carte bancaire ?")) {
+      setCardInfo(null);
+      setShowNewCardForm(true);
+    }
+  };
+
+  const handleNewCardChange = (e) => {
+    const { name, value } = e.target;
+    let formattedValue = value;
+
+    if (name === "card_number") {
+      formattedValue = formatCardNumber(value);
+    } else if (name === "expire_date") {
+      formattedValue = formatExpiryDate(value);
+    } else if (name === "card_cvv") {
+      formattedValue = value.replace(/\D/g, "").slice(0, 4);
+    }
+
+    setNewCardData((prev) => ({ ...prev, [name]: formattedValue }));
+  };
+
+  const isExpiryDateValid = (expiryDate) => {
+    if (!expiryDate || expiryDate.length !== 5) return false;
+    const [month, year] = expiryDate.split("/");
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear() % 100;
+    const currentMonth = currentDate.getMonth() + 1;
+
+    const expiryYear = parseInt(year, 10);
+    const expiryMonth = parseInt(month, 10);
+
+    if (expiryYear < currentYear) return false;
+    if (expiryYear === currentYear && expiryMonth < currentMonth) return false;
+
+    return true;
+  };
+
+  const handleAddNewCard = async () => {
+    setCardError("");
+
+    if (!newCardData.card_holder || !newCardData.card_number || !newCardData.expire_date || !newCardData.card_cvv) {
+      setCardError("Tous les champs de la carte sont requis");
+      return;
+    }
+    if (newCardData.card_cvv.length < 3) {
+      setCardError("Le CVV doit contenir au moins 3 caractères");
+      return;
+    }
+    if (!isExpiryDateValid(newCardData.expire_date)) {
+      setCardError("La date d'expiration doit être une date future (MM/AA)");
+      return;
+    }
+
+    setIsSaving(true);
+    const result = await addOrUpdateCard(newCardData);
+    if (result.success) {
+      const lastDigits = newCardData.card_number.replace(/\s/g, "").slice(-4);
+      setNewCardData({ card_holder: "", card_number: "", expire_date: "", card_cvv: "" });
+      setShowNewCardForm(false);
+      setCardInfo({ holder: newCardData.card_holder, lastDigits: lastDigits, type: <CreditCardVisa /> });
+      setCardMessage({ type: "success", text: "Carte bancaire ajoutée avec succès" });
+      // Refresh user info to update card data
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await fetchUserInfo({ force: true });
+      setTimeout(() => setCardMessage(null), 3000);
+    } else {
+      setCardError(result.error || "Erreur lors de l'ajout de la carte bancaire");
+    }
     setIsSaving(false);
   };
 
@@ -372,6 +541,7 @@ function Profile() {
         {/* Main Doctor & Connection & Payment */}
         <div className="bg-gray-800 rounded-lg p-4 space-y-6">
           {/* Médecin traitant */}
+          {!isEditingPassword && (
           <div>
             <h2 className="text-lg font-semibold text-white mb-4">
               Médecin traitant
@@ -403,43 +573,259 @@ function Profile() {
               <p className="text-gray-400 text-sm text-center py-4">Aucun médecin traitant</p>
             )}
           </div>
+          )}
 
-          {/* Connexion et paiement */}
+          {/* Mot de passe */}
           <div className="border-t border-gray-700 pt-4">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold text-white">
-                Connexion et paiement
+                Mot de passe
               </h2>
-              <button className="text-sm text-blue-400 hover:text-blue-300 transition duration-200 cursor-pointer">
-                Modifier
-              </button>
+              {!isEditingPassword && (
+                <button
+                  onClick={() => setIsEditingPassword(true)}
+                  className="text-sm text-blue-400 hover:text-blue-300 transition duration-200 cursor-pointer"
+                >
+                  Modifier
+                </button>
+              )}
             </div>
-            <div className="space-y-3">
-              <div>
-                <span className="text-gray-400 text-xs">Connexion</span>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-green-400 text-sm">●</span>
-                  <p className="text-white text-sm">Email / Mot de passe</p>
+            {isEditingPassword ? (
+              <div className="space-y-3">
+                {passwordError && (
+                  <div className="p-2 bg-red-900/30 border border-red-700 text-red-300 rounded text-xs">
+                    {passwordError}
+                  </div>
+                )}
+                <div>
+                  <span className="text-gray-400 text-xs">Ancien mot de passe</span>
+                  <input
+                    type="password"
+                    value={oldPassword}
+                    onChange={(e) => setOldPassword(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !isSaving && oldPassword && newPassword && confirmPassword && isPasswordStrong(newPassword) && newPassword === confirmPassword) {
+                        handlePasswordSave();
+                      }
+                    }}
+                    className="w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-1"
+                    placeholder="Entrez votre ancien mot de passe"
+                  />
                 </div>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-gray-400 text-sm">●</span>
-                  <p className="text-white text-sm">Numéro de téléphone</p>
+                <div>
+                  <span className="text-gray-400 text-xs">Nouveau mot de passe</span>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !isSaving && oldPassword && newPassword && confirmPassword && isPasswordStrong(newPassword) && newPassword === confirmPassword) {
+                        handlePasswordSave();
+                      }
+                    }}
+                    className="w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-1"
+                    placeholder="Entrez votre nouveau mot de passe"
+                  />
+                  {newPassword && (
+                    <div className="mt-2 p-2 bg-gray-700 rounded text-xs space-y-1">
+                      <div className={validatePasswordStrength(newPassword).includes("au moins 8 caractères") ? "text-red-400" : "text-green-400"}>
+                        ✓ Au moins 8 caractères
+                      </div>
+                      <div className={validatePasswordStrength(newPassword).includes("une majuscule") ? "text-red-400" : "text-green-400"}>
+                        ✓ Une majuscule (A-Z)
+                      </div>
+                      <div className={validatePasswordStrength(newPassword).includes("une minuscule") ? "text-red-400" : "text-green-400"}>
+                        ✓ Une minuscule (a-z)
+                      </div>
+                      <div className={validatePasswordStrength(newPassword).includes("un chiffre") ? "text-red-400" : "text-green-400"}>
+                        ✓ Un chiffre (0-9)
+                      </div>
+                      <div className={validatePasswordStrength(newPassword).includes("un caractère spécial") ? "text-red-400" : "text-green-400"}>
+                        ✓ Un caractère spécial (!@#$%...)
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <span className="text-gray-400 text-xs">Confirmer le nouveau mot de passe</span>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !isSaving && oldPassword && newPassword && confirmPassword && isPasswordStrong(newPassword) && newPassword === confirmPassword) {
+                        handlePasswordSave();
+                      }
+                    }}
+                    className={`w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 mt-1 ${
+                      newPassword && confirmPassword && newPassword === confirmPassword
+                        ? "focus:ring-green-500 border border-green-600"
+                        : newPassword && confirmPassword && newPassword !== confirmPassword
+                        ? "focus:ring-red-500 border border-red-600"
+                        : "focus:ring-blue-500"
+                    }`}
+                    placeholder="Confirmez votre nouveau mot de passe"
+                  />
+                  {newPassword && confirmPassword && newPassword !== confirmPassword && (
+                    <p className="text-red-400 text-xs mt-1">Les mots de passe ne correspondent pas</p>
+                  )}
+                  {newPassword && confirmPassword && newPassword === confirmPassword && (
+                    <p className="text-green-400 text-xs mt-1">Les mots de passe correspondent</p>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setIsEditingPassword(false);
+                      setOldPassword("");
+                      setNewPassword("");
+                      setConfirmPassword("");
+                      setPasswordError("");
+                    }}
+                    className="text-sm text-gray-400 hover:text-gray-300 transition duration-200 cursor-pointer"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={handlePasswordSave}
+                    className="text-sm text-green-400 hover:text-green-300 transition duration-200 cursor-pointer disabled:opacity-50"
+                    disabled={isSaving || !isPasswordStrong(newPassword) || newPassword !== confirmPassword || !oldPassword}
+                  >
+                    {isSaving ? "..." : "Enregistrer"}
+                  </button>
                 </div>
               </div>
-              <div>
-                <span className="text-gray-400 text-xs">Carte bancaire</span>
-                <div className="flex items-center gap-2 mt-1">
-                  <p className="text-white text-sm">
-                    CardHolder FullName{" "}
-                    <span className="bg-blue-800 rounded-xl p-1 text-white">
-                      •••• •••• •••• 4582
-                    </span>
-                  </p>
-                  <span className="text-gray-500 text-xs">Visa</span>
-                </div>
+            ) : (
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-green-400 text-sm">●</span>
+                <p className="text-white text-sm">Protégé par mot de passe</p>
               </div>
-            </div>
+            )}
           </div>
+
+          {/* Carte bancaire */}
+          {!isEditingPassword && (
+          <div className="border-t border-gray-700 pt-4">
+            {cardMessage && (
+              <div
+                className={`mb-4 p-3 rounded-lg ${
+                  cardMessage.type === "success"
+                    ? "bg-green-900/30 border border-green-700 text-green-300"
+                    : "bg-red-900/30 border border-red-700 text-red-300"
+                }`}
+              >
+                {cardMessage.text}
+              </div>
+            )}
+            <h2 className="text-lg font-semibold text-white mb-4">
+              Carte bancaire
+            </h2>
+            {cardInfo && !showNewCardForm ? (
+              <div className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <div className="flex flex-col gap-1">
+                    <p className="text-white text-sm">
+                      {cardInfo.holder}{" "}
+                      <span className="bg-blue-800 rounded-xl p-1 text-white">
+                        •••• •••• •••• {cardInfo.lastDigits}
+                      </span>
+                    </p>
+                  </div>
+                  <CreditCardVisa className="w-10 h-6" />
+                </div>
+                <button
+                  onClick={handleDeleteCard}
+                  className="text-red-400 hover:text-red-300 transition duration-200 cursor-pointer text-lg"
+                  title="Supprimer la carte"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : showNewCardForm ? (
+              <div className="space-y-3">
+                {cardError && (
+                  <div className="p-2 bg-red-900/30 border border-red-700 text-red-300 rounded text-xs">
+                    {cardError}
+                  </div>
+                )}
+                <div>
+                  <span className="text-gray-400 text-xs">Titulaire de la carte</span>
+                  <input
+                    type="text"
+                    name="card_holder"
+                    value={newCardData.card_holder}
+                    onChange={handleNewCardChange}
+                    className="w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-1"
+                    placeholder="Nom complet"
+                  />
+                </div>
+                <div>
+                  <span className="text-gray-400 text-xs">Numéro de carte</span>
+                  <input
+                    type="text"
+                    name="card_number"
+                    value={newCardData.card_number}
+                    onChange={handleNewCardChange}
+                    className="w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-1 font-mono tracking-wide"
+                    placeholder="1234 5678 9012 3456"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-gray-400 text-xs">Date d'expiration</span>
+                    <input
+                      type="text"
+                      name="expire_date"
+                      value={newCardData.expire_date}
+                      onChange={handleNewCardChange}
+                      className="w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-1 font-mono"
+                      placeholder="MM/AA"
+                    />
+                  </div>
+                  <div>
+                    <span className="text-gray-400 text-xs">CVV</span>
+                    <input
+                      type="text"
+                      name="card_cvv"
+                      value={newCardData.card_cvv}
+                      onChange={handleNewCardChange}
+                      className="w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-1 font-mono"
+                      placeholder="123"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setShowNewCardForm(false);
+                      setNewCardData({ card_holder: "", card_number: "", expire_date: "", card_cvv: "" });
+                    }}
+                    className="text-sm text-gray-400 hover:text-gray-300 transition duration-200 cursor-pointer"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={handleAddNewCard}
+                    className="text-sm text-green-400 hover:text-green-300 transition duration-200 cursor-pointer"
+                    disabled={isSaving}
+                  >
+                    {isSaving ? "..." : "Ajouter la carte"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-gray-400 text-sm mb-3">Aucune carte bancaire</p>
+                <button
+                  onClick={() => setShowNewCardForm(true)}
+                  className="text-sm text-blue-400 hover:text-blue-300 transition duration-200 cursor-pointer px-4 py-2 bg-blue-900/30 rounded border border-blue-700 hover:bg-blue-900/50"
+                >
+                  Ajouter une carte
+                </button>
+              </div>
+            )}
+          </div>
+          )}
         </div>
 
         {/* Mes proches */}
