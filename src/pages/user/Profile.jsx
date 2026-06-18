@@ -62,28 +62,6 @@ function Profile() {
     socialNumber: "",
   });
 
-  // Mock proches (attached accounts) data
-  const proches = [
-    {
-      id: 1,
-      firstName: "Marie",
-      lastName: "Dupont",
-      relation: "Épouse",
-    },
-    {
-      id: 2,
-      firstName: "Lucas",
-      lastName: "Dupont",
-      relation: "Fils",
-    },
-    {
-      id: 3,
-      firstName: "Emma",
-      lastName: "Dupont",
-      relation: "Fille",
-    },
-  ];
-
   const [appointments, setAppointments] = useState([]);
   const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [appointmentsLoading, setAppointmentsLoading] = useState(true);
@@ -831,27 +809,15 @@ function Profile() {
         <div className="bg-gray-800 rounded-lg p-4">
           <div className="flex justify-between items-center mb-2">
             <h2 className="text-lg font-semibold text-white">Mes proches</h2>
-            <button className="text-sm text-blue-400 hover:text-blue-300 transition duration-200 cursor-pointer">
+            <button
+              onClick={() => alert("Fonctionnalité à venir")}
+              className="text-sm text-blue-400 hover:text-blue-300 transition duration-200 cursor-pointer"
+            >
               Ajouter
             </button>
           </div>
           <div className="space-y-2">
-            {proches.map((proche) => (
-              <div
-                key={proche.id}
-                className="flex items-center gap-3 p-2 bg-gray-700 rounded-lg"
-              >
-                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                  {proche.firstName.charAt(0)}
-                </div>
-                <div className="flex-1">
-                  <p className="text-white text-sm">
-                    {proche.firstName} {proche.lastName}
-                  </p>
-                  <p className="text-gray-400 text-xs">{proche.relation}</p>
-                </div>
-              </div>
-            ))}
+            <p className="text-gray-400 text-sm text-center py-4">Aucun proche ajouté</p>
           </div>
         </div>
       </div>

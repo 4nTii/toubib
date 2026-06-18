@@ -146,6 +146,13 @@ function AppointmentCard({ appointment, showActions = true }) {
               </a>
             )}
 
+            <button
+              onClick={() => alert('Fonctionnalité à venir')}
+              className="text-xs px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition cursor-pointer w-full text-center"
+            >
+              Documents
+            </button>
+
             {(status === "scheduled" || status === "confirmed") && (
               <button
                 onClick={handleCancelClick}
