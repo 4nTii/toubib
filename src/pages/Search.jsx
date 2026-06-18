@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { searchResults } from "../services/searchService";
-import { FTP_TARGET } from "../config/config";
 import { LocationIcon } from "../components/icons/IconService";
 import Layout from "../components/Layout/Layout";
 
@@ -48,7 +47,7 @@ function Search() {
   }, [searchValue, location, page]);
 
   const getDoctorImageUrl = (imagePath, gender) => {
-    if (imagePath) return `${FTP_TARGET}/${imagePath}`;
+    if (imagePath) return imagePath;
     return DEFAULT_AVATARS[gender] || DEFAULT_AVATARS.male;
   };
 

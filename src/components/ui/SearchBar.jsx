@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { search, searchGeo } from "../../services/searchService";
-import { FTP_TARGET } from "../../config/config";
 import {
   SearchIcon,
   LocationPinIcon,
@@ -67,7 +66,7 @@ function SearchBar({ variant = "header", initialSearch = "", initialLocation = "
 
   // Helpers
   const getDoctorImageUrl = (imagePath, gender) => {
-    if (imagePath) return `${FTP_TARGET}/${imagePath}`;
+    if (imagePath) return imagePath;
     return CONFIG.DEFAULT_AVATARS[gender] || CONFIG.DEFAULT_AVATARS.male;
   };
 

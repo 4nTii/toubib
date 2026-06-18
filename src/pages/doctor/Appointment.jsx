@@ -10,7 +10,6 @@ import DateUtils, {
   offsetDate,
   offsetDateFrom,
 } from "../../services/dateService";
-import { FTP_TARGET } from "../../config/config";
 
 function Appointment() {
   const { id } = useParams();
@@ -161,7 +160,7 @@ function Appointment() {
 
   /* ── Helpers ───────────────────────────────────────────────── */
   const getProfileImage = () => {
-    if (doctor?.profilePicture) return `${FTP_TARGET}/${doctor.profilePicture}`;
+    if (doctor?.profilePicture) return doctor.profilePicture;
     const gender = doctor?.user?.gender || "male";
     return `/images/user/avatar-doctor-${gender}.webp`;
   };

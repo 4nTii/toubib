@@ -4,7 +4,6 @@ import Layout from "../../components/Layout/Layout";
 import GoogleMaps from "../../components/UiHTML/GoogleMaps";
 import { getBusinessSiteById } from "../../services/businessSiteService";
 import { parseWorkingSchedule } from "../../services/dateService";
-import { FTP_TARGET } from "../../config/config";
 
 function BusinessSite() {
   const { id } = useParams();
@@ -198,7 +197,7 @@ function BusinessSite() {
                             <img
                               src={
                                 doc.profilePicture
-                                  ? `${FTP_TARGET}/${doc.profilePicture}`
+                                  ? doc.profilePicture
                                   : "/images/user/avatar-doctor-male.webp"
                               }
                               alt={`Dr. ${doc.firstName} ${doc.lastName}`}

@@ -6,7 +6,6 @@ import { VerifiedIcon } from "../../components/UiHTML/VerifiedIcon";
 import DateUtils from "../../services/dateService";
 import { updateUserProfile, changePassword, addOrUpdateCard } from "../../services/authService";
 import { getUserAppointments } from "../../services/userAppointmentsService";
-import { FTP_TARGET } from "../../config/config";
 import { CreditCardVisa } from "../../components/icons/IconService";
 
 // Format social security number: 1 23 45 67 890 123 123
@@ -557,7 +556,7 @@ function Profile() {
                 className="w-full flex items-center gap-3 p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition duration-200 cursor-pointer"
               >
                 <img
-                  src={user.mainDoctor.photo ? `${FTP_TARGET}/${user.mainDoctor.photo}` : "/images/user/avatar-doctor-male.webp"}
+                  src={user.mainDoctor.photo ? user.mainDoctor.photo : "/images/user/avatar-doctor-male.webp"}
                   alt={`Dr. ${user.mainDoctor.firstName} ${user.mainDoctor.lastName}`}
                   className="w-12 h-12 rounded-full object-cover shrink-0"
                   onError={(e) => { e.currentTarget.src = "/images/user/avatar-doctor-male.webp"; }}

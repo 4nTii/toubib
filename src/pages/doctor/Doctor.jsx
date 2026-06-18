@@ -9,7 +9,6 @@ import {
   formatSlotDate,
 } from "../../services/dateService";
 import { formatFee } from "../../services/mathService";
-import { FTP_TARGET } from "../../config/config";
 
 function Doctor() {
   const { id } = useParams();
@@ -50,7 +49,7 @@ function Doctor() {
 
   const getProfileImage = () => {
     if (doctor?.profilePicture) {
-      return `${FTP_TARGET}/${doctor.profilePicture}`;
+      return doctor.profilePicture;
     }
     const gender = doctor?.user?.gender || "male";
     return `/images/user/avatar-doctor-${gender}.webp`;

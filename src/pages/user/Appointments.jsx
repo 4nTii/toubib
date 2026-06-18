@@ -3,7 +3,6 @@ import Layout from "../../components/Layout/Layout";
 import { getUserAppointments } from "../../services/userAppointmentsService";
 import { getAppointmentStatusLabel } from "../../services/dateService";
 import DateUtils from "../../services/dateService";
-import { FTP_TARGET } from "../../config/config";
 
 /* ── Statut badge ─────────────────────────────────────────────── */
 const STATUS_MAP = {
