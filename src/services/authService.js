@@ -1,5 +1,6 @@
 import { API_URL } from "../config/config";
 import DateUtils from "./dateService";
+import { fetchWithTokenRefresh } from "./tokenService";
 
 /**
  * Get user info by fetching from API (uses HttpOnly cookie for auth)
@@ -7,9 +8,8 @@ import DateUtils from "./dateService";
  */
 export async function getUserInfo() {
   try {
-    const response = await fetch(`${API_URL}/users/me`, {
+    const response = await fetchWithTokenRefresh(`${API_URL}/users/me`, {
       method: "GET",
-      credentials: "include",
       headers: {
         Accept: "application/json",
       },
@@ -161,9 +161,8 @@ export async function resetPassword(token, password) {
  */
 export async function updateUserProfile(fields) {
   try {
-    const response = await fetch(`${API_URL}/users/me`, {
+    const response = await fetchWithTokenRefresh(`${API_URL}/users/me`, {
       method: "PATCH",
-      credentials: "include",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -203,9 +202,8 @@ export async function updateUserProfile(fields) {
  */
 export async function changePassword(oldPassword, newPassword) {
   try {
-    const response = await fetch(`${API_URL}/users/me/change-password`, {
+    const response = await fetchWithTokenRefresh(`${API_URL}/users/me/change-password`, {
       method: "PATCH",
-      credentials: "include",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -244,9 +242,8 @@ export async function changePassword(oldPassword, newPassword) {
  */
 export async function addOrUpdateCard(cardData) {
   try {
-    const response = await fetch(`${API_URL}/users/me/card`, {
+    const response = await fetchWithTokenRefresh(`${API_URL}/users/me/card`, {
       method: "PATCH",
-      credentials: "include",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
