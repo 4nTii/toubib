@@ -4,7 +4,7 @@ import Layout from "../../components/Layout/Layout";
 import { getUserAppointments } from "../../services/userAppointmentsService";
 import { getAppointmentStatusLabel } from "../../services/dateService";
 import DateUtils from "../../services/dateService";
-import { buildDoctorSlug } from "../../services/doctorService";
+import { navigateToDoctor } from "../../services/doctorService";
 
 /* ── Statut badge ─────────────────────────────────────────────── */
 const STATUS_MAP = {
@@ -76,7 +76,7 @@ function AppointmentCard({ appointment, showActions = true }) {
 
   const handleCardClick = () => {
     if (doctorId) {
-      navigate(`/doctor/${doctorId}/${buildDoctorSlug(doctorFirstName, doctorLastName)}`);
+      navigateToDoctor(navigate, doctorId, doctorFirstName, doctorLastName);
     }
   };
 

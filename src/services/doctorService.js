@@ -1,8 +1,17 @@
 import { API_URL } from "../config/config";
 
 export function buildDoctorSlug(firstName, lastName) {
-  const slugify = (s) => (s || "").toLowerCase().replace(/\s+/g, "-");
-  return `${slugify(firstName)}_${slugify(lastName)}`;
+  const slugify = (s) => (s || "").toLowerCase().replace(/\s+/g, "-").trim();
+  const first = slugify(firstName);
+  const last = slugify(lastName);
+  if (!first && !last) return null;
+  return `${first}_${last}`;
+}
+
+export function navigateToDoctor(navigate, id, firstName, lastName) {
+  const slug = buildDoctorSlug(firstName, lastName);
+  if (!id || !slug) return;
+  navigate(`/doctor/${id}/${slug}`);
 }
 
 /**

@@ -12,7 +12,7 @@ import DateUtils, {
 } from "../../services/dateService";
 
 function Appointment() {
-  const { id } = useParams();
+  const { id, slug } = useParams();
   const navigate = useNavigate();
   const { state: routeState } = useLocation();
   const { user, isAuthenticated } = useAuth();
@@ -60,7 +60,7 @@ function Appointment() {
   useEffect(() => {
     async function fetchDoctor() {
       setDoctorLoading(true);
-      const result = await getDoctorById(id);
+      const result = await getDoctorById(id, slug);
       if (result.success) {
         const fetchedDoctor = result.data.doctor;
         setDoctor(fetchedDoctor);
@@ -72,7 +72,7 @@ function Appointment() {
       setDoctorLoading(false);
     }
     fetchDoctor();
-  }, [id]);
+  }, [id, slug]);
 
   /* ── Fetch available slots whenever date range or business site changes ──────── */
   useEffect(() => {
@@ -104,12 +104,13 @@ function Appointment() {
     if (!isAuthenticated) {
       savePendingAppointment({
         doctorId: id,
+        slug,
         date: selectedDate,
         slot: selectedSlot,
         reason,
       });
       navigate("/auth", {
-        state: { redirectAfterAuth: `/doctor/${id}/appointment` },
+        state: { redirectAfterAuth: `/doctor/${id}/${slug}/appointment` },
       });
       return;
     }

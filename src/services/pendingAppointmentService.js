@@ -4,6 +4,7 @@ const STORAGE_KEY = "toubib_pending_appointment";
  * Save a pending appointment to localStorage (used when user is not authenticated).
  * @param {object} appointment
  * @param {number|string} appointment.doctorId
+ * @param {string}        appointment.slug       - doctor slug (firstName_lastName)
  * @param {string}        appointment.date       - YYYY-MM-DD
  * @param {object}        appointment.slot       - { start: "HH:mm", end: "HH:mm" }
  * @param {string}        [appointment.reason]   - optional consultation reason

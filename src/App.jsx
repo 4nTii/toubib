@@ -57,7 +57,7 @@ function App() {
           }
         />
         <Route path="/doctor/:id/:name" element={<Doctor />} />
-        <Route path="/doctor/:id/appointment" element={<Appointment />} />
+        <Route path="/doctor/:id/:slug/appointment" element={<Appointment />} />
         <Route path="/cabinet/:id" element={<BusinessSite />} />
         <Route path="/search" element={<Search />} />
 
@@ -79,7 +79,7 @@ function AuthRoute() {
     const pending = getPendingAppointment();
     if (pending) {
       clearPendingAppointment();
-      navigate(`/doctor/${pending.doctorId}/appointment`, {
+      navigate(`/doctor/${pending.doctorId}/${pending.slug}/appointment`, {
         replace: true,
         state: { pendingAppointment: pending },
       });

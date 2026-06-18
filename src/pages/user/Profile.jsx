@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { buildDoctorSlug } from "../../services/doctorService";
+import { navigateToDoctor } from "../../services/doctorService";
 import Layout from "../../components/Layout/Layout";
 import { VerifiedIcon } from "../../components/UiHTML/VerifiedIcon";
 import DateUtils from "../../services/dateService";
-import { updateUserProfile, changePassword, addOrUpdateCard } from "../../services/authService";
+import {
+  updateUserProfile,
+  changePassword,
+  addOrUpdateCard,
+} from "../../services/authService";
 import { getUserAppointments } from "../../services/userAppointmentsService";
 import { CreditCardVisa } from "../../components/icons/IconService";
 
@@ -95,7 +99,7 @@ function Profile() {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        const pastAppointments = allAppointments.filter(appointment => {
+        const pastAppointments = allAppointments.filter((appointment) => {
           // Use dateIso if available, otherwise use date
           const dateStr = appointment.dateIso || appointment.date;
           if (!dateStr) return false;
@@ -174,10 +178,13 @@ function Profile() {
 
     if (result.success) {
       // Wait a moment and fetch user info to ensure the update is persisted
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
       await fetchUserInfo({ force: true });
       setIsEditing(false);
-      setSaveMessage({ type: "success", text: "Profil mis à jour avec succès" });
+      setSaveMessage({
+        type: "success",
+        text: "Profil mis à jour avec succès",
+      });
       // Reset form data after successful update
       setFormData({
         firstName: "",
@@ -192,7 +199,10 @@ function Profile() {
       setTimeout(() => setSaveMessage(null), 3000);
     } else {
       console.error("Failed to update profile:", result.error);
-      setSaveMessage({ type: "error", text: result.error || "Erreur lors de la mise à jour du profil" });
+      setSaveMessage({
+        type: "error",
+        text: result.error || "Erreur lors de la mise à jour du profil",
+      });
       // Clear message after 3 seconds
       setTimeout(() => setSaveMessage(null), 3000);
     }
@@ -206,7 +216,8 @@ function Profile() {
     if (!/[A-Z]/.test(password)) errors.push("une majuscule");
     if (!/[a-z]/.test(password)) errors.push("une minuscule");
     if (!/[0-9]/.test(password)) errors.push("un chiffre");
-    if (!/[!@#$%^&*()_+\-=\[\]{};:'".,<>?\/\\|`~]/.test(password)) errors.push("un caractère spécial");
+    if (!/[!@#$%^&*()_+\-=\[\]{};:'".,<>?\/\\|`~]/.test(password))
+      errors.push("un caractère spécial");
     return errors;
   };
 
@@ -242,10 +253,15 @@ function Profile() {
       setNewPassword("");
       setConfirmPassword("");
       setIsEditingPassword(false);
-      setSaveMessage({ type: "success", text: "Mot de passe mis à jour avec succès" });
+      setSaveMessage({
+        type: "success",
+        text: "Mot de passe mis à jour avec succès",
+      });
       setTimeout(() => setSaveMessage(null), 3000);
     } else {
-      setPasswordError(result.error || "Erreur lors de la mise à jour du mot de passe");
+      setPasswordError(
+        result.error || "Erreur lors de la mise à jour du mot de passe",
+      );
     }
     setIsSaving(false);
   };
@@ -268,7 +284,11 @@ function Profile() {
   };
 
   const handleDeleteCard = () => {
-    if (window.confirm("Êtes-vous sûr de vouloir supprimer cette carte bancaire ?")) {
+    if (
+      window.confirm(
+        "Êtes-vous sûr de vouloir supprimer cette carte bancaire ?",
+      )
+    ) {
       setCardInfo(null);
       setShowNewCardForm(true);
     }
@@ -308,7 +328,12 @@ function Profile() {
   const handleAddNewCard = async () => {
     setCardError("");
 
-    if (!newCardData.card_holder || !newCardData.card_number || !newCardData.expire_date || !newCardData.card_cvv) {
+    if (
+      !newCardData.card_holder ||
+      !newCardData.card_number ||
+      !newCardData.expire_date ||
+      !newCardData.card_cvv
+    ) {
       setCardError("Tous les champs de la carte sont requis");
       return;
     }
@@ -325,16 +350,30 @@ function Profile() {
     const result = await addOrUpdateCard(newCardData);
     if (result.success) {
       const lastDigits = newCardData.card_number.replace(/\s/g, "").slice(-4);
-      setNewCardData({ card_holder: "", card_number: "", expire_date: "", card_cvv: "" });
+      setNewCardData({
+        card_holder: "",
+        card_number: "",
+        expire_date: "",
+        card_cvv: "",
+      });
       setShowNewCardForm(false);
-      setCardInfo({ holder: newCardData.card_holder, lastDigits: lastDigits, type: <CreditCardVisa /> });
-      setCardMessage({ type: "success", text: "Carte bancaire ajoutée avec succès" });
+      setCardInfo({
+        holder: newCardData.card_holder,
+        lastDigits: lastDigits,
+        type: <CreditCardVisa />,
+      });
+      setCardMessage({
+        type: "success",
+        text: "Carte bancaire ajoutée avec succès",
+      });
       // Refresh user info to update card data
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
       await fetchUserInfo({ force: true });
       setTimeout(() => setCardMessage(null), 3000);
     } else {
-      setCardError(result.error || "Erreur lors de l'ajout de la carte bancaire");
+      setCardError(
+        result.error || "Erreur lors de l'ajout de la carte bancaire",
+      );
     }
     setIsSaving(false);
   };
@@ -459,7 +498,9 @@ function Profile() {
                   />
                 </div>
                 <div>
-                  <span className="text-gray-400 text-xs">Numéro de sécurité sociale</span>
+                  <span className="text-gray-400 text-xs">
+                    Numéro de sécurité sociale
+                  </span>
                   <input
                     type="text"
                     name="socialNumber"
@@ -509,7 +550,9 @@ function Profile() {
                   <span className="text-gray-400 text-xs">
                     Numéro de sécurité sociale
                   </span>
-                  <p className="text-white text-sm font-mono">{formatSocialNumber(user?.socialNumber) || "Non renseigné"}</p>
+                  <p className="text-white text-sm font-mono">
+                    {formatSocialNumber(user?.socialNumber) || "Non renseigné"}
+                  </p>
                 </div>
               </>
             )}
@@ -520,42 +563,56 @@ function Profile() {
         <div className="bg-gray-800 rounded-lg p-4 space-y-6">
           {/* Médecin traitant */}
           {!isEditingPassword && (
-          <div>
-            <h2 className="text-lg font-semibold text-white mb-4">
-              Médecin traitant
-            </h2>
-            {user?.mainDoctor ? (
-              <button
-                onClick={() => {
-                  navigate(`/doctor/${user.mainDoctor.id}/${buildDoctorSlug(user.mainDoctor.firstName, user.mainDoctor.lastName)}`);
-                }}
-                className="w-full flex items-center gap-3 p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition duration-200 cursor-pointer"
-              >
-                <img
-                  src={user.mainDoctor.photo ? user.mainDoctor.photo : "/images/user/avatar-doctor-male.webp"}
-                  alt={`Dr. ${user.mainDoctor.firstName} ${user.mainDoctor.lastName}`}
-                  className="w-12 h-12 rounded-full object-cover shrink-0"
-                  onError={(e) => { e.currentTarget.src = "/images/user/avatar-doctor-male.webp"; }}
-                />
-                <div className="flex-1 text-left">
-                  <p className="text-white font-semibold text-sm">
-                    Dr. {user.mainDoctor.firstName} {user.mainDoctor.lastName}
-                  </p>
-                  <p className="text-blue-400 text-xs">{user.mainDoctor.speciality}</p>
-                </div>
-              </button>
-            ) : (
-              <p className="text-gray-400 text-sm text-center py-4">Aucun médecin traitant</p>
-            )}
-          </div>
+            <div>
+              <h2 className="text-lg font-semibold text-white mb-4">
+                Médecin traitant
+              </h2>
+              {user?.mainDoctor ? (
+                <button
+                  onClick={() => {
+                    navigateToDoctor(
+                      navigate,
+                      user.mainDoctor.id,
+                      user.mainDoctor.firstName,
+                      user.mainDoctor.lastName,
+                    );
+                  }}
+                  className="w-full flex items-center gap-3 p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition duration-200 cursor-pointer"
+                >
+                  <img
+                    src={
+                      user.mainDoctor.photo
+                        ? user.mainDoctor.photo
+                        : "/images/user/avatar-doctor-male.webp"
+                    }
+                    alt={`Dr. ${user.mainDoctor.firstName} ${user.mainDoctor.lastName}`}
+                    className="w-12 h-12 rounded-full object-cover shrink-0"
+                    onError={(e) => {
+                      e.currentTarget.src =
+                        "/images/user/avatar-doctor-male.webp";
+                    }}
+                  />
+                  <div className="flex-1 text-left">
+                    <p className="text-white font-semibold text-sm">
+                      Dr. {user.mainDoctor.firstName} {user.mainDoctor.lastName}
+                    </p>
+                    <p className="text-blue-400 text-xs">
+                      {user.mainDoctor.speciality}
+                    </p>
+                  </div>
+                </button>
+              ) : (
+                <p className="text-gray-400 text-sm text-center py-4">
+                  Aucun médecin traitant
+                </p>
+              )}
+            </div>
           )}
 
           {/* Mot de passe */}
           <div className="border-t border-gray-700 pt-4">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-white">
-                Mot de passe
-              </h2>
+              <h2 className="text-lg font-semibold text-white">Mot de passe</h2>
               {!isEditingPassword && (
                 <button
                   onClick={() => setIsEditingPassword(true)}
@@ -573,13 +630,23 @@ function Profile() {
                   </div>
                 )}
                 <div>
-                  <span className="text-gray-400 text-xs">Ancien mot de passe</span>
+                  <span className="text-gray-400 text-xs">
+                    Ancien mot de passe
+                  </span>
                   <input
                     type="password"
                     value={oldPassword}
                     onChange={(e) => setOldPassword(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && !isSaving && oldPassword && newPassword && confirmPassword && isPasswordStrong(newPassword) && newPassword === confirmPassword) {
+                      if (
+                        e.key === "Enter" &&
+                        !isSaving &&
+                        oldPassword &&
+                        newPassword &&
+                        confirmPassword &&
+                        isPasswordStrong(newPassword) &&
+                        newPassword === confirmPassword
+                      ) {
                         handlePasswordSave();
                       }
                     }}
@@ -588,13 +655,23 @@ function Profile() {
                   />
                 </div>
                 <div>
-                  <span className="text-gray-400 text-xs">Nouveau mot de passe</span>
+                  <span className="text-gray-400 text-xs">
+                    Nouveau mot de passe
+                  </span>
                   <input
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && !isSaving && oldPassword && newPassword && confirmPassword && isPasswordStrong(newPassword) && newPassword === confirmPassword) {
+                      if (
+                        e.key === "Enter" &&
+                        !isSaving &&
+                        oldPassword &&
+                        newPassword &&
+                        confirmPassword &&
+                        isPasswordStrong(newPassword) &&
+                        newPassword === confirmPassword
+                      ) {
                         handlePasswordSave();
                       }
                     }}
@@ -603,50 +680,112 @@ function Profile() {
                   />
                   {newPassword && (
                     <div className="mt-2 p-2 bg-gray-700 rounded text-xs space-y-1">
-                      <div className={validatePasswordStrength(newPassword).includes("au moins 8 caractères") ? "text-red-400" : "text-green-400"}>
+                      <div
+                        className={
+                          validatePasswordStrength(newPassword).includes(
+                            "au moins 8 caractères",
+                          )
+                            ? "text-red-400"
+                            : "text-green-400"
+                        }
+                      >
                         ✓ Au moins 8 caractères
                       </div>
-                      <div className={validatePasswordStrength(newPassword).includes("une majuscule") ? "text-red-400" : "text-green-400"}>
+                      <div
+                        className={
+                          validatePasswordStrength(newPassword).includes(
+                            "une majuscule",
+                          )
+                            ? "text-red-400"
+                            : "text-green-400"
+                        }
+                      >
                         ✓ Une majuscule (A-Z)
                       </div>
-                      <div className={validatePasswordStrength(newPassword).includes("une minuscule") ? "text-red-400" : "text-green-400"}>
+                      <div
+                        className={
+                          validatePasswordStrength(newPassword).includes(
+                            "une minuscule",
+                          )
+                            ? "text-red-400"
+                            : "text-green-400"
+                        }
+                      >
                         ✓ Une minuscule (a-z)
                       </div>
-                      <div className={validatePasswordStrength(newPassword).includes("un chiffre") ? "text-red-400" : "text-green-400"}>
+                      <div
+                        className={
+                          validatePasswordStrength(newPassword).includes(
+                            "un chiffre",
+                          )
+                            ? "text-red-400"
+                            : "text-green-400"
+                        }
+                      >
                         ✓ Un chiffre (0-9)
                       </div>
-                      <div className={validatePasswordStrength(newPassword).includes("un caractère spécial") ? "text-red-400" : "text-green-400"}>
+                      <div
+                        className={
+                          validatePasswordStrength(newPassword).includes(
+                            "un caractère spécial",
+                          )
+                            ? "text-red-400"
+                            : "text-green-400"
+                        }
+                      >
                         ✓ Un caractère spécial (!@#$%...)
                       </div>
                     </div>
                   )}
                 </div>
                 <div>
-                  <span className="text-gray-400 text-xs">Confirmer le nouveau mot de passe</span>
+                  <span className="text-gray-400 text-xs">
+                    Confirmer le nouveau mot de passe
+                  </span>
                   <input
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && !isSaving && oldPassword && newPassword && confirmPassword && isPasswordStrong(newPassword) && newPassword === confirmPassword) {
+                      if (
+                        e.key === "Enter" &&
+                        !isSaving &&
+                        oldPassword &&
+                        newPassword &&
+                        confirmPassword &&
+                        isPasswordStrong(newPassword) &&
+                        newPassword === confirmPassword
+                      ) {
                         handlePasswordSave();
                       }
                     }}
                     className={`w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 mt-1 ${
-                      newPassword && confirmPassword && newPassword === confirmPassword
+                      newPassword &&
+                      confirmPassword &&
+                      newPassword === confirmPassword
                         ? "focus:ring-green-500 border border-green-600"
-                        : newPassword && confirmPassword && newPassword !== confirmPassword
-                        ? "focus:ring-red-500 border border-red-600"
-                        : "focus:ring-blue-500"
+                        : newPassword &&
+                            confirmPassword &&
+                            newPassword !== confirmPassword
+                          ? "focus:ring-red-500 border border-red-600"
+                          : "focus:ring-blue-500"
                     }`}
                     placeholder="Confirmez votre nouveau mot de passe"
                   />
-                  {newPassword && confirmPassword && newPassword !== confirmPassword && (
-                    <p className="text-red-400 text-xs mt-1">Les mots de passe ne correspondent pas</p>
-                  )}
-                  {newPassword && confirmPassword && newPassword === confirmPassword && (
-                    <p className="text-green-400 text-xs mt-1">Les mots de passe correspondent</p>
-                  )}
+                  {newPassword &&
+                    confirmPassword &&
+                    newPassword !== confirmPassword && (
+                      <p className="text-red-400 text-xs mt-1">
+                        Les mots de passe ne correspondent pas
+                      </p>
+                    )}
+                  {newPassword &&
+                    confirmPassword &&
+                    newPassword === confirmPassword && (
+                      <p className="text-green-400 text-xs mt-1">
+                        Les mots de passe correspondent
+                      </p>
+                    )}
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -664,7 +803,12 @@ function Profile() {
                   <button
                     onClick={handlePasswordSave}
                     className="text-sm text-green-400 hover:text-green-300 transition duration-200 cursor-pointer disabled:opacity-50"
-                    disabled={isSaving || !isPasswordStrong(newPassword) || newPassword !== confirmPassword || !oldPassword}
+                    disabled={
+                      isSaving ||
+                      !isPasswordStrong(newPassword) ||
+                      newPassword !== confirmPassword ||
+                      !oldPassword
+                    }
                   >
                     {isSaving ? "..." : "Enregistrer"}
                   </button>
@@ -680,126 +824,139 @@ function Profile() {
 
           {/* Carte bancaire */}
           {!isEditingPassword && (
-          <div className="border-t border-gray-700 pt-4">
-            {cardMessage && (
-              <div
-                className={`mb-4 p-3 rounded-lg ${
-                  cardMessage.type === "success"
-                    ? "bg-green-900/30 border border-green-700 text-green-300"
-                    : "bg-red-900/30 border border-red-700 text-red-300"
-                }`}
-              >
-                {cardMessage.text}
-              </div>
-            )}
-            <h2 className="text-lg font-semibold text-white mb-4">
-              Carte bancaire
-            </h2>
-            {cardInfo && !showNewCardForm ? (
-              <div className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <div className="flex flex-col gap-1">
-                    <p className="text-white text-sm">
-                      {cardInfo.holder}{" "}
-                      <span className="bg-blue-800 rounded-xl p-1 text-white">
-                        •••• •••• •••• {cardInfo.lastDigits}
+            <div className="border-t border-gray-700 pt-4">
+              {cardMessage && (
+                <div
+                  className={`mb-4 p-3 rounded-lg ${
+                    cardMessage.type === "success"
+                      ? "bg-green-900/30 border border-green-700 text-green-300"
+                      : "bg-red-900/30 border border-red-700 text-red-300"
+                  }`}
+                >
+                  {cardMessage.text}
+                </div>
+              )}
+              <h2 className="text-lg font-semibold text-white mb-4">
+                Carte bancaire
+              </h2>
+              {cardInfo && !showNewCardForm ? (
+                <div className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <div className="flex flex-col gap-1">
+                      <p className="text-white text-sm">
+                        {cardInfo.holder}{" "}
+                        <span className="bg-blue-800 rounded-xl p-1 text-white">
+                          •••• •••• •••• {cardInfo.lastDigits}
+                        </span>
+                      </p>
+                    </div>
+                    <CreditCardVisa className="w-10 h-6" />
+                  </div>
+                  <button
+                    onClick={handleDeleteCard}
+                    className="text-red-400 hover:text-red-300 transition duration-200 cursor-pointer text-lg"
+                    title="Supprimer la carte"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : showNewCardForm ? (
+                <div className="space-y-3">
+                  {cardError && (
+                    <div className="p-2 bg-red-900/30 border border-red-700 text-red-300 rounded text-xs">
+                      {cardError}
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-gray-400 text-xs">
+                      Titulaire de la carte
+                    </span>
+                    <input
+                      type="text"
+                      name="card_holder"
+                      value={newCardData.card_holder}
+                      onChange={handleNewCardChange}
+                      className="w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-1"
+                      placeholder="Nom complet"
+                    />
+                  </div>
+                  <div>
+                    <span className="text-gray-400 text-xs">
+                      Numéro de carte
+                    </span>
+                    <input
+                      type="text"
+                      name="card_number"
+                      value={newCardData.card_number}
+                      onChange={handleNewCardChange}
+                      className="w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-1 font-mono tracking-wide"
+                      placeholder="1234 5678 9012 3456"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <span className="text-gray-400 text-xs">
+                        Date d'expiration
                       </span>
-                    </p>
+                      <input
+                        type="text"
+                        name="expire_date"
+                        value={newCardData.expire_date}
+                        onChange={handleNewCardChange}
+                        className="w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-1 font-mono"
+                        placeholder="MM/AA"
+                      />
+                    </div>
+                    <div>
+                      <span className="text-gray-400 text-xs">CVV</span>
+                      <input
+                        type="text"
+                        name="card_cvv"
+                        value={newCardData.card_cvv}
+                        onChange={handleNewCardChange}
+                        className="w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-1 font-mono"
+                        placeholder="123"
+                      />
+                    </div>
                   </div>
-                  <CreditCardVisa className="w-10 h-6" />
-                </div>
-                <button
-                  onClick={handleDeleteCard}
-                  className="text-red-400 hover:text-red-300 transition duration-200 cursor-pointer text-lg"
-                  title="Supprimer la carte"
-                >
-                  ✕
-                </button>
-              </div>
-            ) : showNewCardForm ? (
-              <div className="space-y-3">
-                {cardError && (
-                  <div className="p-2 bg-red-900/30 border border-red-700 text-red-300 rounded text-xs">
-                    {cardError}
-                  </div>
-                )}
-                <div>
-                  <span className="text-gray-400 text-xs">Titulaire de la carte</span>
-                  <input
-                    type="text"
-                    name="card_holder"
-                    value={newCardData.card_holder}
-                    onChange={handleNewCardChange}
-                    className="w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-1"
-                    placeholder="Nom complet"
-                  />
-                </div>
-                <div>
-                  <span className="text-gray-400 text-xs">Numéro de carte</span>
-                  <input
-                    type="text"
-                    name="card_number"
-                    value={newCardData.card_number}
-                    onChange={handleNewCardChange}
-                    className="w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-1 font-mono tracking-wide"
-                    placeholder="1234 5678 9012 3456"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <span className="text-gray-400 text-xs">Date d'expiration</span>
-                    <input
-                      type="text"
-                      name="expire_date"
-                      value={newCardData.expire_date}
-                      onChange={handleNewCardChange}
-                      className="w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-1 font-mono"
-                      placeholder="MM/AA"
-                    />
-                  </div>
-                  <div>
-                    <span className="text-gray-400 text-xs">CVV</span>
-                    <input
-                      type="text"
-                      name="card_cvv"
-                      value={newCardData.card_cvv}
-                      onChange={handleNewCardChange}
-                      className="w-full bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-1 font-mono"
-                      placeholder="123"
-                    />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setShowNewCardForm(false);
+                        setNewCardData({
+                          card_holder: "",
+                          card_number: "",
+                          expire_date: "",
+                          card_cvv: "",
+                        });
+                      }}
+                      className="text-sm text-gray-400 hover:text-gray-300 transition duration-200 cursor-pointer"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      onClick={handleAddNewCard}
+                      className="text-sm text-green-400 hover:text-green-300 transition duration-200 cursor-pointer"
+                      disabled={isSaving}
+                    >
+                      {isSaving ? "..." : "Ajouter la carte"}
+                    </button>
                   </div>
                 </div>
-                <div className="flex gap-2">
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-gray-400 text-sm mb-3">
+                    Aucune carte bancaire
+                  </p>
                   <button
-                    onClick={() => {
-                      setShowNewCardForm(false);
-                      setNewCardData({ card_holder: "", card_number: "", expire_date: "", card_cvv: "" });
-                    }}
-                    className="text-sm text-gray-400 hover:text-gray-300 transition duration-200 cursor-pointer"
+                    onClick={() => setShowNewCardForm(true)}
+                    className="text-sm text-blue-400 hover:text-blue-300 transition duration-200 cursor-pointer px-4 py-2 bg-blue-900/30 rounded border border-blue-700 hover:bg-blue-900/50"
                   >
-                    Annuler
-                  </button>
-                  <button
-                    onClick={handleAddNewCard}
-                    className="text-sm text-green-400 hover:text-green-300 transition duration-200 cursor-pointer"
-                    disabled={isSaving}
-                  >
-                    {isSaving ? "..." : "Ajouter la carte"}
+                    Ajouter une carte
                   </button>
                 </div>
-              </div>
-            ) : (
-              <div className="text-center py-4">
-                <p className="text-gray-400 text-sm mb-3">Aucune carte bancaire</p>
-                <button
-                  onClick={() => setShowNewCardForm(true)}
-                  className="text-sm text-blue-400 hover:text-blue-300 transition duration-200 cursor-pointer px-4 py-2 bg-blue-900/30 rounded border border-blue-700 hover:bg-blue-900/50"
-                >
-                  Ajouter une carte
-                </button>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
           )}
         </div>
 
@@ -815,7 +972,12 @@ function Profile() {
             </button>
           </div>
           <div className="space-y-2">
-            <p className="text-gray-400 text-sm text-center py-4">Aucun proche ajouté</p>
+            <p className="text-gray-400 text-sm text-center py-4">
+              Aucun proche ajouté
+            </p>
+            <p className="text-gray-400 text-sm text-center py-4">
+              (Fonctionnalité à venir..)
+            </p>
           </div>
         </div>
       </div>
@@ -828,7 +990,9 @@ function Profile() {
         {appointmentsLoading ? (
           <div className="text-center py-8 text-gray-400">Chargement...</div>
         ) : filteredAppointments.length === 0 ? (
-          <div className="text-center py-8 text-gray-400">Aucun rendez-vous</div>
+          <div className="text-center py-8 text-gray-400">
+            Aucun rendez-vous
+          </div>
         ) : (
           <>
             <div className="overflow-x-auto">
@@ -836,9 +1000,15 @@ function Profile() {
                 <thead>
                   <tr className="border-b border-gray-700">
                     <th className="w-16 px-2 py-3 hidden sm:table-cell"></th>
-                    <th className="px-4 py-3 text-gray-400 font-medium">Date</th>
-                    <th className="px-4 py-3 text-gray-400 font-medium">Patient</th>
-                    <th className="px-4 py-3 text-gray-400 font-medium">Docteur</th>
+                    <th className="px-4 py-3 text-gray-400 font-medium">
+                      Date
+                    </th>
+                    <th className="px-4 py-3 text-gray-400 font-medium">
+                      Patient
+                    </th>
+                    <th className="px-4 py-3 text-gray-400 font-medium">
+                      Docteur
+                    </th>
                     <th className="px-4 py-3"></th>
                   </tr>
                 </thead>
@@ -849,25 +1019,40 @@ function Profile() {
                       className="border-b border-gray-700 hover:bg-gray-700 transition duration-200"
                     >
                       <td className="w-16 px-2 py-3 hidden sm:table-cell">
-                        {appointment.status === 'canceled' && (
+                        {appointment.status === "canceled" && (
                           <span className="bg-red-600 text-white text-xs font-medium px-2 py-1 rounded whitespace-nowrap">
                             Annulé
                           </span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-white">
-                        <span className="md:hidden">{DateUtils.formatDateDDMMYYYY(appointment.dateIso || appointment.date)}</span>
-                        <span className="hidden md:inline">{appointment.date}</span>
+                        <span className="md:hidden">
+                          {DateUtils.formatDateDDMMYYYY(
+                            appointment.dateIso || appointment.date,
+                          )}
+                        </span>
+                        <span className="hidden md:inline">
+                          {appointment.date}
+                        </span>
                       </td>
                       <td className="px-4 py-3 text-white text-sm">
                         {user?.firstName} {user?.lastName}
                       </td>
                       <td className="px-4 py-3 text-white text-sm">
-                        Dr. {appointment.doctorFirstName} {appointment.doctorLastName} <span className="hidden lg:inline">({appointment.businessSiteAddress?.split(',').pop()?.trim() || 'N/A'})</span>
+                        Dr. {appointment.doctorFirstName}{" "}
+                        {appointment.doctorLastName}{" "}
+                        <span className="hidden lg:inline">
+                          (
+                          {appointment.businessSiteAddress
+                            ?.split(",")
+                            .pop()
+                            ?.trim() || "N/A"}
+                          )
+                        </span>
                       </td>
                       <td className="px-4 py-3 text-right">
                         <button
-                          onClick={() => alert('Fonctionnalité à venir')}
+                          onClick={() => alert("Fonctionnalité à venir")}
                           className="bg-blue-600 hover:bg-blue-700 text-white rounded text-xs px-3 py-1 transition duration-200 cursor-pointer"
                         >
                           Documents
@@ -879,16 +1064,17 @@ function Profile() {
               </table>
             </div>
 
-            {!showAllAppointments && filteredAppointments.length > INITIAL_ITEMS && (
-              <div className="flex justify-center mt-6">
-                <button
-                  onClick={() => setShowAllAppointments(true)}
-                  className="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-2 rounded-lg transition duration-200"
-                >
-                  Afficher plus
-                </button>
-              </div>
-            )}
+            {!showAllAppointments &&
+              filteredAppointments.length > INITIAL_ITEMS && (
+                <div className="flex justify-center mt-6">
+                  <button
+                    onClick={() => setShowAllAppointments(true)}
+                    className="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-2 rounded-lg transition duration-200"
+                  >
+                    Afficher plus
+                  </button>
+                </div>
+              )}
           </>
         )}
       </div>

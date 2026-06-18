@@ -431,7 +431,7 @@ function Doctor() {
             {/* Sticky appointment button */}
             {doctor.isActive && (
               <button
-                onClick={() => navigate(`/doctor/${id}/appointment`)}
+                onClick={() => navigate(`/doctor/${id}/${name}/appointment`)}
                 className="hidden md:block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow transition duration-200 cursor-pointer"
               >
                 Prendre rendez-vous
@@ -469,7 +469,7 @@ function Doctor() {
                             <button
                               key={slot.start}
                               onClick={() =>
-                                navigate(`/doctor/${id}/appointment`, {
+                                navigate(`/doctor/${id}/${name}/appointment`, {
                                   state: {
                                     preselectedDate: dateKey,
                                     preselectedSlot: slot,
@@ -539,7 +539,7 @@ function Doctor() {
       {/* Fixed appointment button for mobile */}
       {doctor?.isActive && (
         <button
-          onClick={() => navigate(`/doctor/${id}/appointment`)}
+          onClick={() => navigate(`/doctor/${id}/${name}/appointment`)}
           className="md:hidden fixed bottom-0 left-0 right-0 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-4 shadow-lg transition duration-200 cursor-pointer"
         >
           Prendre rendez-vous
