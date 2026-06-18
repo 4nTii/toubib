@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "../../components/Layout/Layout";
 import { getUserAppointments } from "../../services/userAppointmentsService";
 import { getAppointmentStatusLabel } from "../../services/dateService";
 import DateUtils from "../../services/dateService";
+import { buildDoctorSlug } from "../../services/doctorService";
 
 /* ── Statut badge ─────────────────────────────────────────────── */
 const STATUS_MAP = {
@@ -40,8 +42,10 @@ function StatusBadge({ status, appointmentDate }) {
 
 /* ── Appointment card ──────────────────────────────────────────── */
 function AppointmentCard({ appointment, showActions = true }) {
+  const navigate = useNavigate();
   const {
     id,
+    doctorId,
     doctorFirstName,
     doctorLastName,
     doctorSpeciality,
@@ -59,9 +63,9 @@ function AppointmentCard({ appointment, showActions = true }) {
 
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
-  const handleCancelClick = () => {
+  const handleCancelClick = (e) => {
+    e.stopPropagation();
     if (window.confirm("Êtes-vous sûr de vouloir annuler ce rendez-vous ?")) {
-      // TODO: Appeler API pour annuler le rendez-vous
       console.log("Annulation du rendez-vous:", id);
     }
   };
@@ -70,8 +74,17 @@ function AppointmentCard({ appointment, showActions = true }) {
     ? `https://www.google.com/maps/dir//${encodeURIComponent(businessSiteAddress)}`
     : null;
 
+  const handleCardClick = () => {
+    if (doctorId) {
+      navigate(`/doctor/${doctorId}/${buildDoctorSlug(doctorFirstName, doctorLastName)}`);
+    }
+  };
+
   return (
-    <div className="bg-gray-800 rounded-xl p-5 flex flex-col sm:flex-row gap-4">
+    <div
+      onClick={handleCardClick}
+      className="bg-gray-800 rounded-xl p-5 flex flex-col sm:flex-row gap-4 cursor-pointer hover:bg-gray-750 transition"
+    >
       {/* Avatar */}
       <img
         src={doctorAvatar || `/images/user/avatar-doctor-male.webp`}
@@ -140,7 +153,8 @@ function AppointmentCard({ appointment, showActions = true }) {
                 href={mapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition w-full text-center"
+                onClick={(e) => e.stopPropagation()}
+                className="text-xs px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition cursor-pointer w-full text-center"
               >
                 Itinéraire
               </a>
@@ -284,7 +298,7 @@ function Appointments() {
                 {past.length > 3 && !showMoreHistory && (
                   <button
                     onClick={() => setShowMoreHistory(true)}
-                    className="w-full mt-4 px-4 py-2.5 bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white rounded-lg transition font-medium text-sm"
+                    className="w-full mt-4 px-4 py-2.5 bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white rounded-lg transition font-medium text-sm cursor-pointer"
                   >
                     Afficher plus ({past.length - 3} rendez-vous supplémentaires)
                   </button>
@@ -294,7 +308,7 @@ function Appointments() {
                 {showMoreHistory && (
                   <button
                     onClick={() => setShowMoreHistory(false)}
-                    className="w-full mt-4 px-4 py-2.5 bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white rounded-lg transition font-medium text-sm"
+                    className="w-full mt-4 px-4 py-2.5 bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white rounded-lg transition font-medium text-sm cursor-pointer"
                   >
                     Afficher moins
                   </button>

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { search, searchGeo } from "../../services/searchService";
+import { buildDoctorSlug } from "../../services/doctorService";
 import {
   SearchIcon,
   LocationPinIcon,
@@ -151,9 +152,7 @@ function SearchBar({ variant = "header", initialSearch = "", initialLocation = "
   };
 
   const handleDoctorSelect = (doctor) => {
-    const slug = encodeURIComponent(
-      doctor.name.toLowerCase().replace(/\s+/g, "-"),
-    );
+    const slug = buildDoctorSlug(doctor.firstName, doctor.lastName);
     navigate(`/doctor/${doctor.id}/${slug}`);
     closeSearchDropdown();
   };

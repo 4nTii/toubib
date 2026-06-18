@@ -4,6 +4,7 @@ import Layout from "../../components/Layout/Layout";
 import GoogleMaps from "../../components/UiHTML/GoogleMaps";
 import { getBusinessSiteById } from "../../services/businessSiteService";
 import { parseWorkingSchedule } from "../../services/dateService";
+import { buildDoctorSlug } from "../../services/doctorService";
 
 function BusinessSite() {
   const { id } = useParams();
@@ -186,7 +187,7 @@ function BusinessSite() {
                         key={doc.doctorBusinessSiteId}
                         onClick={() =>
                           navigate(
-                            `/doctor/${doc.doctorId}/${doc.lastName.toLowerCase()}`,
+                            `/doctor/${doc.doctorId}/${buildDoctorSlug(doc.firstName, doc.lastName)}`,
                           )
                         }
                         className="border border-gray-700 rounded-lg p-4 hover:border-gray-500 hover:bg-gray-750 transition cursor-pointer"

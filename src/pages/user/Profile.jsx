@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { buildDoctorSlug } from "../../services/doctorService";
 import Layout from "../../components/Layout/Layout";
 import { VerifiedIcon } from "../../components/UiHTML/VerifiedIcon";
 import DateUtils from "../../services/dateService";
@@ -526,10 +527,7 @@ function Profile() {
             {user?.mainDoctor ? (
               <button
                 onClick={() => {
-                  const slug = encodeURIComponent(
-                    `${user.mainDoctor.firstName}-${user.mainDoctor.lastName}`.toLowerCase().replace(/\s+/g, "-")
-                  );
-                  navigate(`/doctor/${user.mainDoctor.id}/${slug}`);
+                  navigate(`/doctor/${user.mainDoctor.id}/${buildDoctorSlug(user.mainDoctor.firstName, user.mainDoctor.lastName)}`);
                 }}
                 className="w-full flex items-center gap-3 p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition duration-200 cursor-pointer"
               >

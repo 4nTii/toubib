@@ -11,7 +11,7 @@ import {
 import { formatFee } from "../../services/mathService";
 
 function Doctor() {
-  const { id } = useParams();
+  const { id, name } = useParams();
   const navigate = useNavigate();
   const [doctor, setDoctor] = useState(null);
   const [availableSlot, setAvailableSlot] = useState({});
@@ -21,7 +21,7 @@ function Doctor() {
   useEffect(() => {
     async function fetchDoctor() {
       setLoading(true);
-      const result = await getDoctorById(id);
+      const result = await getDoctorById(id, name);
       if (result.success) {
         setDoctor(result.data.doctor);
         setAvailableSlot(result.data.availableSlots ?? {});

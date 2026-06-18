@@ -1,13 +1,16 @@
 import { API_URL } from "../config/config";
 
+export function buildDoctorSlug(firstName, lastName) {
+  const slugify = (s) => (s || "").toLowerCase().replace(/\s+/g, "-");
+  return `${slugify(firstName)}_${slugify(lastName)}`;
+}
+
 /**
- * Fetch doctor by ID
- * @param {number|string} id - Doctor ID
- * @returns {Promise<{success: boolean, data?: object, error?: string}>}
+ * Fetch doctor by ID + slug (firstName_lastName)
  */
-export async function getDoctorById(id) {
+export async function getDoctorById(id, slug) {
   try {
-    const response = await fetch(`${API_URL}/doctor/${id}`, {
+    const response = await fetch(`${API_URL}/doctor/${id}/${slug}`, {
       method: "GET",
       credentials: "include",
       headers: { Accept: "application/json" },

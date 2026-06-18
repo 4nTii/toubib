@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { APP_NAME } from "../config/config";
 import CGUBanner from "../components/Layout/CGUBanner";
+import Footer from "../components/Layout/Footer";
 import SearchBar from "../components/ui/SearchBar";
 import BlindColorToggle from "../components/BlindColorToggle";
 
@@ -217,6 +218,7 @@ function Index() {
         </div>
       </main>
       <CGUBanner />
+      <Footer />
     </div>
   );
 }

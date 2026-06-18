@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { searchResults } from "../services/searchService";
+import { buildDoctorSlug } from "../services/doctorService";
 import { LocationIcon } from "../components/icons/IconService";
 import Layout from "../components/Layout/Layout";
 
@@ -52,9 +53,7 @@ function Search() {
   };
 
   const handleDoctorClick = (doctor) => {
-    const slug = encodeURIComponent(
-      doctor.fullName.toLowerCase().replace(/\s+/g, "-")
-    );
+    const slug = buildDoctorSlug(doctor.firstName, doctor.lastName);
     navigate(`/doctor/${doctor.id}/${slug}`);
   };
 
