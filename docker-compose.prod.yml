@@ -2,6 +2,7 @@ services:
 
   toubib:
     build:
+      target: prod
       args:
         - VITE_API_URL=${VITE_API_URL}
         - VITE_APP_NAME=${VITE_APP_NAME}
